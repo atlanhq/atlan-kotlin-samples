@@ -1,3 +1,5 @@
+val jarPath = "$rootDir/jars"
+
 plugins {
     kotlin("jvm")
 }
@@ -15,8 +17,13 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test:1.8.10")
 }
 
-tasks.test {
-    useJUnitPlatform()
+tasks {
+    test {
+        useJUnitPlatform()
+    }
+    clean {
+        delete(jarPath)
+    }
 }
 
 kotlin {
