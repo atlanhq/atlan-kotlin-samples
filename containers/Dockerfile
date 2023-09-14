@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright 2023 Atlan Pte. Ltd.
-FROM ghcr.io/atlanhq/atlan-java-numaflow:latest
+FROM ghcr.io/atlanhq/atlan-java/atlan-java-numaflow:latest
 
 LABEL org.opencontainers.image.vendor="Atlan Pte. Ltd." \
       org.opencontainers.image.source="https://github.com/atlanhq/atlan-kotlin-samples" \
