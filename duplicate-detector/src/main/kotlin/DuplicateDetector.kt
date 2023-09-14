@@ -28,11 +28,17 @@ private val hashToColumns = ConcurrentHashMap<Int, Set<String>>()
 private val uniqueContainers = ConcurrentHashMap<AssetKey, AssetKey>()
 
 fun main(args: Array<String>) {
-    Atlan.setBaseUrl(System.getenv("ATLAN_BASE_URL"))
-    Atlan.setApiToken(System.getenv("ATLAN_API_KEY"))
+    Utils.setClient()
 
-    val qnPrefix = args[0]
-    val types = args[1].split(",")
+    val qnPrefix: String
+    val types: List<String>
+    if (args.isNotEmpty()) {
+        qnPrefix = args[0]
+        types = args[1].split(",")
+    } else {
+        qnPrefix = System.getenv("QN_PREFIX")
+        types = System.getenv("ASSET_TYPES").split(",")
+    }
 
     log.info("Detecting duplicates across {} (for prefix {}) on: {}", types, qnPrefix, Atlan.getDefaultClient().baseUrl)
     findAssets(qnPrefix, types)
