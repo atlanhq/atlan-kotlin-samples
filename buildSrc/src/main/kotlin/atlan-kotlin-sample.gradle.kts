@@ -2,6 +2,7 @@ val jarPath = "$rootDir/jars"
 
 plugins {
     kotlin("jvm")
+    id("com.diffplug.spotless")
 }
 
 group = "com.atlan"
@@ -28,4 +29,14 @@ tasks {
 
 kotlin {
     jvmToolchain(17)
+}
+
+spotless {
+    kotlin {
+        licenseHeaderFile("$rootDir/LICENSE_HEADER")
+        ktlint()
+    }
+    kotlinGradle {
+        ktlint()
+    }
 }

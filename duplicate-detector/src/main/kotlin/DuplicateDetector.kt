@@ -2,7 +2,14 @@
 /* Copyright 2023 Atlan Pte. Ltd. */
 import com.atlan.Atlan
 import com.atlan.exception.NotFoundException
-import com.atlan.model.assets.*
+import com.atlan.model.assets.Asset
+import com.atlan.model.assets.Column
+import com.atlan.model.assets.Glossary
+import com.atlan.model.assets.GlossaryTerm
+import com.atlan.model.assets.IColumn
+import com.atlan.model.assets.MaterializedView
+import com.atlan.model.assets.Table
+import com.atlan.model.assets.View
 import com.atlan.model.enums.CertificateStatus
 import com.atlan.model.search.CompoundQuery
 import com.atlan.util.AssetBatch
@@ -21,7 +28,6 @@ private val hashToColumns = ConcurrentHashMap<Int, Set<String>>()
 private val uniqueContainers = ConcurrentHashMap<AssetKey, AssetKey>()
 
 fun main(args: Array<String>) {
-
     Atlan.setBaseUrl(System.getenv("ATLAN_BASE_URL"))
     Atlan.setApiToken(System.getenv("ATLAN_API_KEY"))
 
@@ -54,7 +60,7 @@ fun findAssets(qnPrefix: String, types: Collection<String>) {
             }
             val columnNames = columns.stream()
                 .map(IColumn::getName)
-                .map{ normalize(it) }
+                .map { normalize(it) }
                 .toList()
                 .toSet()
             val containerKey = AssetKey(asset.typeName, asset.qualifiedName, asset.guid)
@@ -92,12 +98,12 @@ fun termsForDuplicates(glossaryQN: String) {
             val columns = hashToColumns[hash]
             val batch = AssetBatch(Atlan.getDefaultClient(), "asset", 50, false, AssetBatch.CustomMetadataHandling.MERGE, true)
             totalTerms.getAndIncrement()
-            val termName = "Dup. (${hash})"
+            val termName = "Dup. ($hash)"
             val term = try {
                 GlossaryTerm.findByNameFast(termName, glossaryQN)
             } catch (e: NotFoundException) {
                 val toCreate = GlossaryTerm.creator(termName, glossaryQN)
-                    .description("Assets with the same set of  ${columns?.size} columns:\n" + columns?.joinToString(separator="\n") { "- $it" })
+                    .description("Assets with the same set of  ${columns?.size} columns:\n" + columns?.joinToString(separator = "\n") { "- $it" })
                     .certificateStatus(CertificateStatus.DRAFT)
                     .build()
                 toCreate.save().getResult(toCreate)
@@ -114,10 +120,12 @@ fun termsForDuplicates(glossaryQN: String) {
                 .forEach { asset ->
                     totalAssets.getAndIncrement()
                     val existingTerms = asset.assignedTerms
-                    batch.add(asset.trimToRequired()
-                        .assignedTerms(existingTerms)
-                        .assignedTerm(term)
-                        .build())
+                    batch.add(
+                        asset.trimToRequired()
+                            .assignedTerms(existingTerms)
+                            .assignedTerm(term)
+                            .build(),
+                    )
                 }
             batch.flush()
         }
