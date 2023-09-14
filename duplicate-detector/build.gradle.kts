@@ -1,4 +1,4 @@
-val jarName = "duplicate-detector.jar"
+//val jarName = "duplicate-detector.jar"
 val jarPath = "$rootDir/jars"
 
 plugins {
@@ -7,7 +7,6 @@ plugins {
 }
 
 group = "com.atlan"
-version = "1.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
@@ -35,7 +34,7 @@ tasks {
             attributes["Main-Class"] = "DuplicateDetector"
         }
         destinationDirectory.set(file(jarPath))
-        archiveFileName.set(jarName)
+        //archiveFileName.set(jarName)
         dependencies {
             include(dependency("org.jetbrains.kotlin:.*:.*"))
             include(dependency("io.github.microutils:kotlin-logging-jvm:.*"))
