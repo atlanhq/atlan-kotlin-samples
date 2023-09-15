@@ -20,7 +20,8 @@ repositories {
 dependencies {
     implementation("com.atlan:atlan-java:1.2.3-SNAPSHOT")
     implementation("io.github.microutils:kotlin-logging-jvm:3.0.5")
-    implementation("org.slf4j:slf4j-simple:2.0.7")
+    runtimeOnly("org.apache.logging.log4j:log4j-core:2.20.0")
+    runtimeOnly("org.apache.logging.log4j:log4j-slf4j2-impl:2.20.0")
     testImplementation("org.jetbrains.kotlin:kotlin-test:1.8.10")
 }
 

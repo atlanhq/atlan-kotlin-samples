@@ -17,7 +17,8 @@ tasks {
         dependencies {
             include(dependency("org.jetbrains.kotlin:.*:.*"))
             include(dependency("io.github.microutils:kotlin-logging-jvm:.*"))
-            include(dependency("org.slf4j:slf4j-simple:.*"))
+            include(dependency("org.apache.logging.log4j:log4j-core:2.20.0"))
+            include(dependency("org.apache.logging.log4j:log4j-slf4j2-impl:2.20.0"))
         }
         mergeServiceFiles()
     }

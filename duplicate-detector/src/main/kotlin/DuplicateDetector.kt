@@ -16,6 +16,7 @@ import com.atlan.util.AssetBatch
 import mu.KotlinLogging
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
+import kotlin.math.round
 
 private val log = KotlinLogging.logger {}
 
@@ -32,37 +33,48 @@ fun main(args: Array<String>) {
 
     val qnPrefix: String
     val types: List<String>
+    val batchSize: Int
     if (args.isNotEmpty()) {
         qnPrefix = args[0]
         types = args[1].split(",")
+        batchSize = 50
     } else {
-        qnPrefix = System.getenv("QN_PREFIX")
-        types = System.getenv("ASSET_TYPES").split(",")
+        val envVars = System.getenv()
+        qnPrefix = envVars.getOrDefault("QN_PREFIX", "default")
+        types = envVars.getOrDefault("ASSET_TYPES", "Table,View,MaterialisedView").split(",")
+        batchSize = envVars.getOrDefault("BATCH_SIZE", "50").toInt()
     }
 
     log.info("Detecting duplicates across {} (for prefix {}) on: {}", types, qnPrefix, Atlan.getDefaultClient().baseUrl)
-    findAssets(qnPrefix, types)
+    findAssets(qnPrefix, types, batchSize)
     log.info("Processed a total of {} unique assets.", uniqueContainers.size)
 
     val glossaryQN = glossaryForDuplicates()
-    termsForDuplicates(glossaryQN)
+    termsForDuplicates(glossaryQN, batchSize)
 }
 
-fun findAssets(qnPrefix: String, types: Collection<String>) {
+fun findAssets(qnPrefix: String, types: Collection<String>, batchSize: Int) {
     val startTime = System.currentTimeMillis()
-    Atlan.getDefaultClient().assets.select()
+    val request = Atlan.getDefaultClient().assets.select()
         .where(CompoundQuery.assetTypes(types))
-        .where(Table.QUALIFIED_NAME.startsWith(qnPrefix))
-        .pageSize(50)
+        .where(Asset.QUALIFIED_NAME.startsWith(qnPrefix))
+        .pageSize(batchSize)
         .includeOnResults(Table.COLUMNS)
         .includeOnRelations(Column.NAME)
-        .stream(true)
+    val totalAssetCount = request.count()
+    val count = AtomicLong(0)
+    log.info("Comparing a total of {} assets...", totalAssetCount)
+    request.stream(true)
         .forEach { asset ->
             val columns = when (asset) {
                 is Table -> asset.columns
                 is View -> asset.columns
                 is MaterializedView -> asset.columns
                 else -> setOf()
+            }
+            val localCount = count.getAndIncrement()
+            if (localCount.mod(batchSize) == 0) {
+                log.info(" ... processed {}/{} ({}%)", localCount, totalAssetCount, round((localCount.toDouble() / totalAssetCount) * 100))
             }
             val columnNames = columns.stream()
                 .map(IColumn::getName)
@@ -79,6 +91,7 @@ fun findAssets(qnPrefix: String, types: Collection<String>) {
                 hashToAssetKeys[hash]?.add(containerKey)
             }
         }
+    log.info(" ... processed {}/{} ({}%)", totalAssetCount, totalAssetCount, 100)
     log.info(" ... time to calculate: {} ms", System.currentTimeMillis() - startTime)
 }
 
@@ -94,16 +107,21 @@ fun glossaryForDuplicates(): String {
     }
 }
 
-fun termsForDuplicates(glossaryQN: String) {
+fun termsForDuplicates(glossaryQN: String, batchSize: Int) {
     val startTime = System.currentTimeMillis()
-    val totalTerms = AtomicLong(0)
-    val totalAssets = AtomicLong(0)
+    val termCount = AtomicLong(0)
+    val assetCount = AtomicLong(0)
+    val totalSets = hashToAssetKeys.keys
+        .stream()
+        .filter { hashToAssetKeys[it]?.size!! > 1 }
+        .count()
+    log.info("Processing {} total sets of duplicates...", totalSets)
     hashToAssetKeys.keys.forEach { hash ->
         val keys = hashToAssetKeys[hash]
         if (keys?.size!! > 1) {
             val columns = hashToColumns[hash]
-            val batch = AssetBatch(Atlan.getDefaultClient(), "asset", 50, false, AssetBatch.CustomMetadataHandling.MERGE, true)
-            totalTerms.getAndIncrement()
+            val batch = AssetBatch(Atlan.getDefaultClient(), "asset", batchSize, false, AssetBatch.CustomMetadataHandling.MERGE, true)
+            termCount.getAndIncrement()
             val termName = "Dup. ($hash)"
             val term = try {
                 GlossaryTerm.findByNameFast(termName, glossaryQN)
@@ -121,23 +139,25 @@ fun termsForDuplicates(glossaryQN: String) {
                 .where(Asset.GUID.`in`(guids))
                 .includeOnResults(Asset.ASSIGNED_TERMS)
                 .includeOnRelations(Asset.QUALIFIED_NAME)
-                .pageSize(50)
+                .pageSize(batchSize)
                 .stream(true)
                 .forEach { asset ->
-                    totalAssets.getAndIncrement()
+                    assetCount.getAndIncrement()
                     val existingTerms = asset.assignedTerms
-                    batch.add(
+                    if (batch.add(
                         asset.trimToRequired()
                             .assignedTerms(existingTerms)
                             .assignedTerm(term)
                             .build(),
-                    )
+                    ) != null) {
+                        log.info(" ... processed {}/{} ({}%)", termCount, totalSets, round((termCount.get().toDouble() / totalSets) * 100))
+                    }
                 }
             batch.flush()
+            log.info(" ... processed {}/{} ({}%)", termCount, totalSets, round((termCount.get().toDouble() / totalSets) * 100))
         }
     }
-    log.info("Detected a total of $totalTerms potentially duplicated assets.")
-    log.info("Detected a total of $totalAssets assets that could be de-duplicated.")
+    log.info("Detected a total of $assetCount assets that could be de-duplicated across $totalSets unique sets of duplicates.")
     log.info(" ... time to consolidate: {} ms", System.currentTimeMillis() - startTime)
 }
 
