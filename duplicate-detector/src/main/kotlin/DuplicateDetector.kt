@@ -145,11 +145,12 @@ fun termsForDuplicates(glossaryQN: String, batchSize: Int) {
                     assetCount.getAndIncrement()
                     val existingTerms = asset.assignedTerms
                     if (batch.add(
-                        asset.trimToRequired()
-                            .assignedTerms(existingTerms)
-                            .assignedTerm(term)
-                            .build(),
-                    ) != null) {
+                            asset.trimToRequired()
+                                .assignedTerms(existingTerms)
+                                .assignedTerm(term)
+                                .build(),
+                        ) != null
+                    ) {
                         log.info(" ... processed {}/{} ({}%)", termCount, totalSets, round((termCount.get().toDouble() / totalSets) * 100))
                     }
                 }
