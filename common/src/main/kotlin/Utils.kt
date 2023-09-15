@@ -21,5 +21,4 @@ object Utils {
             Atlan.setApiToken(System.getenv("ATLAN_API_KEY"))
         }
     }
-
 }
