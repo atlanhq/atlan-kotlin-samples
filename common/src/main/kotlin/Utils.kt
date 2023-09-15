@@ -1,8 +1,10 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 /* Copyright 2023 Atlan Pte. Ltd. */
 import com.atlan.Atlan
-import com.atlan.net.RequestOptions
+import mu.KLogger
 import mu.KotlinLogging
+import java.util.concurrent.atomic.AtomicLong
+import kotlin.math.round
 
 private val log = KotlinLogging.logger {}
 
@@ -45,22 +47,48 @@ object Utils {
     }
 
     /**
-     * Check if the utility is being run through a workflow, and if it is set up the various
-     * workflow headers from the relevant environment variables.
+     * Increments the provided counter by 1 and logs the progress of the job.
+     * Note: if batchSize is provided, will only log progress in increments of the batchSize.
      *
-     * @return request options with the additional headers for the workflow details
+     * @param counter an atomic counter indicating how many things have been processed
+     * @param total total number of things to be done
+     * @param logger through which to report the overall progress
+     * @param batchSize number of things that are done per batch of operations
      */
-    fun getWorkflowOpts(): RequestOptions {
-        val atlanAgent = getEnvVar("X_ATLAN_AGENT", "")
-        return if (atlanAgent == "workflow") {
-            RequestOptions.from(Atlan.getDefaultClient())
-                .extraHeader("x-atlan-agent", listOf("workflow"))
-                .extraHeader("x-atlan-agent-package-name", listOf(getEnvVar("X_ATLAN_AGENT_PACKAGE_NAME", "")))
-                .extraHeader("x-atlan-workflow-id", listOf(getEnvVar("X_ATLAN_WORKFLOW_ID", "")))
-                .extraHeader("x-atlan-agent-id", listOf(getEnvVar("X_ATLAN_AGENT_ID", "")))
-                .build()
+    fun logProgress(counter: AtomicLong, total: Long, logger: KLogger, batchSize: Int = -1) {
+        val localCount = counter.incrementAndGet()
+        if (batchSize > 0) {
+            if (localCount.mod(batchSize) == 0) {
+                logger.info(
+                    " ... processed {}/{} ({}%)",
+                    localCount,
+                    total,
+                    round((localCount.toDouble() / total) * 100),
+                )
+            }
         } else {
-            RequestOptions.from(Atlan.getDefaultClient()).build()
+            logger.info(
+                " ... processed {}/{} ({}%)",
+                localCount,
+                total,
+                round((localCount.toDouble() / total) * 100),
+            )
+        }
+    }
+
+    /**
+     * Check if the utility is being run through a workflow, and if it is set up the various
+     * workflow headers from the relevant environment variables against the default client.
+     */
+    fun setWorkflowOpts() {
+        val atlanAgent = getEnvVar("X_ATLAN_AGENT", "")
+        if (atlanAgent == "workflow") {
+            val headers = Atlan.getDefaultClient().extraHeaders
+            headers.put("x-atlan-agent", listOf("workflow"))
+            headers.put("x-atlan-agent-package-name", listOf(getEnvVar("X_ATLAN_AGENT_PACKAGE_NAME", "")))
+            headers.put("x-atlan-workflow-id", listOf(getEnvVar("X_ATLAN_WORKFLOW_ID", "")))
+            headers.put("x-atlan-agent-id", listOf(getEnvVar("X_ATLAN_AGENT_ID", "")))
+            Atlan.getDefaultClient().extraHeaders = headers
         }
     }
 }
