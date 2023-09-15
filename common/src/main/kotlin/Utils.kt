@@ -8,17 +8,22 @@ private val log = KotlinLogging.logger {}
 object Utils {
 
     fun setClient() {
-        val baseUrl = System.getenv("ATLAN_BASE_URL")
-        val apiToken = System.getenv("ATLAN_API_KEY")
+        val baseUrl = getEnvVar("ATLAN_BASE_URL", "INTERNAL")
+        val apiToken = getEnvVar("ATLAN_API_KEY", "")
         Atlan.setBaseUrl(baseUrl)
-        if (apiToken == null) {
-            val userId = System.getenv("ATLAN_USER_ID")
+        if (apiToken.isEmpty()) {
+            val userId = getEnvVar("ATLAN_USER_ID", "")
             log.info("No API token found, attempting to impersonate user: {}", userId)
             val defClient = Atlan.getDefaultClient()
             val userToken = defClient.impersonate.user(userId)
             Atlan.setApiToken(userToken)
         } else {
-            Atlan.setApiToken(System.getenv("ATLAN_API_KEY"))
+            Atlan.setApiToken(apiToken)
         }
+    }
+
+    fun getEnvVar(name: String, default: String): String {
+        val candidate = System.getenv(name)
+        return if (candidate != null && candidate.isNotEmpty()) candidate else default
     }
 }
