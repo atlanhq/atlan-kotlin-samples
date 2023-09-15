@@ -1,5 +1,5 @@
 .gradle
-debug.log
+tmp/debug.log
 build/
 jars/
 !gradle/wrapper/gradle-wrapper.jar

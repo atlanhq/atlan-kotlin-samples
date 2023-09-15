@@ -7,7 +7,7 @@
                 <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
             </PatternLayout>
         </Console>
-        <File name="FileAppender" fileName="debug.log">
+        <File name="FileAppender" fileName="tmp/debug.log">
             <PatternLayout>
                 <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
             </PatternLayout>
