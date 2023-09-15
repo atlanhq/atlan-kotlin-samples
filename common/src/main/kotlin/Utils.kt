@@ -58,7 +58,7 @@ object Utils {
     fun logProgress(counter: AtomicLong, total: Long, logger: KLogger, batchSize: Int = -1) {
         val localCount = counter.incrementAndGet()
         if (batchSize > 0) {
-            if (localCount.mod(batchSize) == 0) {
+            if (localCount.mod(batchSize) == 0 || localCount == total) {
                 logger.info(
                     " ... processed {}/{} ({}%)",
                     localCount,
