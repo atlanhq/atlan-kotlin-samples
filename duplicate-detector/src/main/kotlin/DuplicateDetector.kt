@@ -39,10 +39,9 @@ fun main(args: Array<String>) {
         types = args[1].split(",")
         batchSize = 50
     } else {
-        val envVars = System.getenv()
-        qnPrefix = envVars.getOrDefault("QN_PREFIX", "default")
-        types = envVars.getOrDefault("ASSET_TYPES", "Table,View,MaterialisedView").split(",")
-        batchSize = envVars.getOrDefault("BATCH_SIZE", "50").toInt()
+        qnPrefix = Utils.getEnvVar("QN_PREFIX", "default")
+        types = Utils.getEnvVar("ASSET_TYPES", "Table,View,MaterialisedView").split(",")
+        batchSize = Utils.getEnvVar("BATCH_SIZE", "50").toInt()
     }
 
     log.info("Detecting duplicates across {} (for prefix {}) on: {}", types, qnPrefix, Atlan.getDefaultClient().baseUrl)
