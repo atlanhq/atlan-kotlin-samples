@@ -52,6 +52,13 @@ fun main(args: Array<String>) {
     termsForDuplicates(glossaryQN, batchSize)
 }
 
+/**
+ * Find the assets to compare with each other for deduplication.
+ *
+ * @param qnPrefix a partial qualifiedName that every matching asset must start with
+ * @param types collection of asset types to include
+ * @param batchSize: maximum number of assets to look for per API request (page of results)
+ */
 fun findAssets(qnPrefix: String, types: Collection<String>, batchSize: Int) {
     val startTime = System.currentTimeMillis()
     val request = Atlan.getDefaultClient().assets.select()
@@ -94,18 +101,34 @@ fun findAssets(qnPrefix: String, types: Collection<String>, batchSize: Int) {
     log.info(" ... time to calculate: {} ms", System.currentTimeMillis() - startTime)
 }
 
+/**
+ * Idempotently create (or fetch) a glossary to capture the duplicate assets.
+ *
+ * @return the qualifiedName of the glossary
+ */
 fun glossaryForDuplicates(): String {
     return try {
-        Glossary.findByName(GLOSSARY_NAME).qualifiedName
+        Glossary.findByName(GLOSSARY_NAME)
+            .qualifiedName
     } catch (e: NotFoundException) {
         val glossary = Glossary.creator(GLOSSARY_NAME)
             .description("Glossary whose terms represent potential duplicate assets.")
             .build()
         log.info("Creating glossary to hold duplicates.")
-        glossary.save().getResult(glossary).qualifiedName
+        Atlan.getDefaultClient().assets
+            .save(glossary, Utils.getWorkflowOpts())
+            .getResult(glossary)
+            .qualifiedName
     }
 }
 
+/**
+ * Idempotently create (or update) a term for each set of 2 or more potential duplicate assets,
+ * and link those potential duplicate assets to the term.
+ *
+ * @param glossaryQN qualifiedName of the glossary in which to manage the terms
+ * @param batchSize maximum number of assets to update at a time
+ */
 fun termsForDuplicates(glossaryQN: String, batchSize: Int) {
     val startTime = System.currentTimeMillis()
     val termCount = AtomicLong(0)
@@ -129,7 +152,9 @@ fun termsForDuplicates(glossaryQN: String, batchSize: Int) {
                     .description("Assets with the same set of  ${columns?.size} columns:\n" + columns?.joinToString(separator = "\n") { "- $it" })
                     .certificateStatus(CertificateStatus.DRAFT)
                     .build()
-                toCreate.save().getResult(toCreate)
+                Atlan.getDefaultClient().assets
+                    .save(toCreate, Utils.getWorkflowOpts())
+                    .getResult(toCreate)
             }
             val guids = keys.stream()
                 .map(AssetKey::guid)
@@ -143,15 +168,12 @@ fun termsForDuplicates(glossaryQN: String, batchSize: Int) {
                 .forEach { asset ->
                     assetCount.getAndIncrement()
                     val existingTerms = asset.assignedTerms
-                    if (batch.add(
-                            asset.trimToRequired()
-                                .assignedTerms(existingTerms)
-                                .assignedTerm(term)
-                                .build(),
-                        ) != null
-                    ) {
-                        log.info(" ... processed {}/{} ({}%)", termCount, totalSets, round((termCount.get().toDouble() / totalSets) * 100))
-                    }
+                    batch.add(
+                        asset.trimToRequired()
+                            .assignedTerms(existingTerms)
+                            .assignedTerm(term)
+                            .build(),
+                    )
                 }
             batch.flush()
             log.info(" ... processed {}/{} ({}%)", termCount, totalSets, round((termCount.get().toDouble() / totalSets) * 100))
@@ -161,6 +183,15 @@ fun termsForDuplicates(glossaryQN: String, batchSize: Int) {
     log.info(" ... time to consolidate: {} ms", System.currentTimeMillis() - startTime)
 }
 
+/**
+ * Normalize the provided column name for comparison purposes.
+ * At the moment this:
+ * 1. Removes any underscores (_)
+ * 2. Makes the entire column name case-insensitive
+ *
+ * @param colName original name of the column
+ * @return the normalized name of the column
+ */
 private fun normalize(colName: String): String {
     return colName.replace("_", "").lowercase()
 }
