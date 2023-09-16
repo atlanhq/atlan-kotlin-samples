@@ -84,10 +84,10 @@ object Utils {
         val atlanAgent = getEnvVar("X_ATLAN_AGENT", "")
         if (atlanAgent == "workflow") {
             val headers = Atlan.getDefaultClient().extraHeaders
-            headers.put("x-atlan-agent", listOf("workflow"))
-            headers.put("x-atlan-agent-package-name", listOf(getEnvVar("X_ATLAN_AGENT_PACKAGE_NAME", "")))
-            headers.put("x-atlan-workflow-id", listOf(getEnvVar("X_ATLAN_WORKFLOW_ID", "")))
-            headers.put("x-atlan-agent-id", listOf(getEnvVar("X_ATLAN_AGENT_ID", "")))
+            headers["x-atlan-agent"] = listOf("workflow")
+            headers["x-atlan-agent-package-name"] = listOf(getEnvVar("X_ATLAN_AGENT_PACKAGE_NAME", ""))
+            headers["x-atlan-agent-workflow-id"] = listOf(getEnvVar("X_ATLAN_AGENT_WORKFLOW_ID", ""))
+            headers["x-atlan-agent-id"] = listOf(getEnvVar("X_ATLAN_AGENT_ID", ""))
             Atlan.getDefaultClient().extraHeaders = headers
         }
     }
