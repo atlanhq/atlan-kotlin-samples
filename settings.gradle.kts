@@ -12,3 +12,4 @@ plugins {
 rootProject.name = "atlan-kotlin-samples"
 include("common")
 include("duplicate-detector")
+include("migration-assistant")
