@@ -6,6 +6,7 @@ import com.atlan.model.assets.AtlanQuery
 import com.atlan.model.assets.AuthPolicy
 import com.atlan.model.assets.IAccessControl
 import com.atlan.model.assets.INamespace
+import com.atlan.model.assets.Link
 import com.atlan.model.assets.Procedure
 import com.atlan.model.fields.AtlanField
 import com.atlan.model.fields.CustomMetadataField
@@ -22,29 +23,6 @@ import com.atlan.samples.reporters.AssetReporter
  */
 class Exporter : AssetReporter() {
 
-    private val customMetadataFields: List<CustomMetadataField>
-
-    init {
-        this.customMetadataFields = getCustomMetadataFields()
-    }
-
-    /**
-     * Retrieve all custom metadata fields for attributes that exist in the tenant.
-     *
-     * @return a list of all custom metadata fields defined in the tenant
-     */
-    private fun getCustomMetadataFields(): List<CustomMetadataField> {
-        val customMetadataDefs = Atlan.getDefaultClient().customMetadataCache
-            .getAllCustomAttributes(false, true)
-        val fields = mutableListOf<CustomMetadataField>()
-        for ((setName, attributes) in customMetadataDefs) {
-            for (attribute in attributes) {
-                fields.add(CustomMetadataField(Atlan.getDefaultClient(), setName, attribute.displayName))
-            }
-        }
-        return fields
-    }
-
     /** {@inheritDoc} */
     override fun getAssetsToExtract(event: Map<String, String>): FluentSearch.FluentSearchBuilder<*, *> {
         val scope = event.getOrDefault("EXPORT_SCOPE", "ENRICHED_ONLY")
@@ -59,8 +37,13 @@ class Exporter : AssetReporter() {
                 .whereSome(Asset.DESCRIPTION.hasAnyValue())
                 .whereSome(Asset.USER_DESCRIPTION.hasAnyValue())
                 .whereSome(Asset.ANNOUNCEMENT_TYPE.hasAnyValue())
+                .whereSome(Asset.ASSIGNED_TERMS.hasAnyValue())
+                .whereSome(Asset.ATLAN_TAGS.hasAnyValue())
+                .whereSome(Asset.README.hasAny())
+                .whereSome(Asset.LINKS.hasAny())
+                .whereSome(Asset.STARRED_BY.hasAnyValue())
                 .minSomes(1)
-            for (cmField in customMetadataFields) {
+            for (cmField in CustomMetadataFields.all) {
                 builder.whereSome(cmField.hasAnyValue())
             }
         }
@@ -69,7 +52,7 @@ class Exporter : AssetReporter() {
 
     /** {@inheritDoc} */
     override fun getAttributesToExtract(event: Map<String, String>): MutableList<AtlanField> {
-        val atttributeList: MutableList<AtlanField> = mutableListOf(
+        val attributeList: MutableList<AtlanField> = mutableListOf(
             Asset.NAME,
             Asset.DESCRIPTION,
             Asset.USER_DESCRIPTION,
@@ -82,11 +65,49 @@ class Exporter : AssetReporter() {
             Asset.ANNOUNCEMENT_MESSAGE,
             Asset.ASSIGNED_TERMS,
             Asset.ATLAN_TAGS,
+            Asset.LINKS,
+            Asset.README,
+            Asset.STARRED_DETAILS,
         )
-        for (cmField in customMetadataFields) {
-            atttributeList.add(cmField)
+        for (cmField in CustomMetadataFields.all) {
+            attributeList.add(cmField)
         }
-        return atttributeList
+        return attributeList
+    }
+
+    /** {@inheritDoc} */
+    override fun getRelatedAttributesToExtract(event: Map<String, String>): MutableList<AtlanField> {
+        return mutableListOf(
+            Asset.NAME, // for Link embedding
+            Asset.DESCRIPTION, // for README embedding
+            Link.LINK, // for Link embedding
+        )
+    }
+}
+
+object CustomMetadataFields {
+
+    val all: List<CustomMetadataField>
+
+    init {
+        all = loadCustomMetadataFields()
+    }
+
+    /**
+     * Retrieve all custom metadata fields for attributes that exist in the tenant.
+     *
+     * @return a list of all custom metadata fields defined in the tenant
+     */
+    private fun loadCustomMetadataFields(): List<CustomMetadataField> {
+        val customMetadataDefs = Atlan.getDefaultClient().customMetadataCache
+            .getAllCustomAttributes(false, true)
+        val fields = mutableListOf<CustomMetadataField>()
+        for ((setName, attributes) in customMetadataDefs) {
+            for (attribute in attributes) {
+                fields.add(CustomMetadataField(Atlan.getDefaultClient(), setName, attribute.displayName))
+            }
+        }
+        return fields
     }
 }
 
