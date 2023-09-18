@@ -91,4 +91,23 @@ object Utils {
             Atlan.getDefaultClient().extraHeaders = headers
         }
     }
+
+    /**
+     * Translates environment variables into a map of settings.
+     * Sets defaults for:
+     * - DELIMITER = |
+     * - BATCH_SIZE = 50
+     *
+     * @return a map of settings drawn from environment variables
+     */
+    fun environmentVariables(): Map<String, String> {
+        val map = System.getenv().toMutableMap()
+        if (!map.containsKey("DELIMITER")) {
+            map["DELIMITER"] = "|"
+        }
+        if (!map.containsKey("BATCH_SIZE")) {
+            map["BATCH_SIZE"] = "50"
+        }
+        return map
+    }
 }
