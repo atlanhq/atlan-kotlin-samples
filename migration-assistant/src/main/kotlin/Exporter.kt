@@ -12,6 +12,7 @@ import com.atlan.model.fields.AtlanField
 import com.atlan.model.fields.CustomMetadataField
 import com.atlan.model.search.FluentSearch
 import com.atlan.samples.reporters.AssetReporter
+import java.io.File
 
 /**
  * Actually run the export, taking all settings from environment variables.
@@ -99,9 +100,8 @@ class Exporter : AssetReporter() {
     /** {@inheritDoc} */
     override fun parseParametersFromEvent(event: MutableMap<String, String>) {
         // We intentionally do NOT call the superclass, to avoid forcing an API-token based client setup
-        // Note that this only sets a default prefix of 'asset-export', only
-        // if there is no FILE_PREFIX defined in the event itself
-        setFilenameWithPrefix(event, "asset-export", "csv")
+        // ... and we just fix a filename here rather than generating one with a timestamp
+        filename = "tmp" + File.separator + "asset-export.csv"
     }
 }
 
