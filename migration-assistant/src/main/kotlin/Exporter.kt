@@ -14,6 +14,18 @@ import com.atlan.model.search.FluentSearch
 import com.atlan.samples.reporters.AssetReporter
 
 /**
+ * Actually run the export, taking all settings from environment variables.
+ * Note: all parameters should be passed through environment variables.
+ */
+fun main() {
+    Utils.setClient()
+    Utils.setWorkflowOpts()
+
+    val exporter = Exporter()
+    exporter.handleRequest(Utils.environmentVariables(), null)
+}
+
+/**
  * Export assets from Atlan, in one of two modes (defined by EXPORT_SCOPE environment variable):
  * - ENRICHED_ONLY — will only export assets that have had some UI-controlled field enriched (default)
  * - ALL — will export all assets
@@ -83,12 +95,22 @@ class Exporter : AssetReporter() {
             Link.LINK, // for Link embedding
         )
     }
+
+    /** {@inheritDoc} */
+    override fun parseParametersFromEvent(event: MutableMap<String, String>) {
+        // We intentionally do NOT call the superclass, to avoid forcing an API-token based client setup
+        // Note that this only sets a default prefix of 'asset-export', only
+        // if there is no FILE_PREFIX defined in the event itself
+        setFilenameWithPrefix(event, "asset-export", "csv")
+    }
 }
 
+/**
+ * Singleton for capturing all the custom metadata fields that exist in the tenant.
+ */
 object CustomMetadataFields {
 
     val all: List<CustomMetadataField>
-
     init {
         all = loadCustomMetadataFields()
     }
@@ -109,13 +131,4 @@ object CustomMetadataFields {
         }
         return fields
     }
-}
-
-/**
- * Actually run the export, taking all settings from environment variables.
- * Note: all parameters should be passed through environment variables.
- */
-fun main() {
-    val exporter = Exporter()
-    exporter.handleRequest(Utils.environmentVariables(), null)
 }
