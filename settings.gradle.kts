@@ -13,3 +13,4 @@ rootProject.name = "atlan-kotlin-samples"
 include("common")
 include("duplicate-detector")
 include("migration-assistant")
+include("openapi-spec-loader")
