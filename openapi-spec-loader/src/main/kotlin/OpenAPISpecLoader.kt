@@ -27,18 +27,18 @@ fun main() {
     Utils.setClient()
     Utils.setWorkflowOpts()
 
-    val apiName = Utils.getEnvVar("API_NAME", "")
+    val connectionName = Utils.getEnvVar("CONNECTION_NAME", "")
     val specUrl = Utils.getEnvVar("SPEC_URL", "")
     val batchSize = Utils.getEnvVar("BATCH_SIZE", "50").toInt()
 
-    if (apiName == "" || specUrl == "") {
-        log.error("Missing required parameter — you must provide BOTH an API name and Spec URL.")
+    if (connectionName == "" || specUrl == "") {
+        log.error("Missing required parameter — you must provide BOTH a connection name and specification URL.")
         exitProcess(1)
     }
 
-    log.info("Loading OpenAPI specification {} from: {}", apiName, specUrl)
+    log.info("Loading OpenAPI specification {} from: {}", connectionName, specUrl)
 
-    val connectionQN = findOrCreateConnection(apiName)
+    val connectionQN = findOrCreateConnection(connectionName)
     val parser = OpenAPISpecReader(specUrl)
     loadOpenAPISpec(connectionQN, parser, batchSize)
 }
@@ -46,23 +46,23 @@ fun main() {
 /**
  * Find an existing connection, or create a new one if an existing connection does not already exist.
  *
- * @param apiName name of the connection (type is fixed as API)
+ * @param name of the connection (type is fixed as API)
  * @return the qualifiedName of the connection
  */
-fun findOrCreateConnection(apiName: String): String {
-    log.info("Searching for existing API connection named: {}", apiName)
+fun findOrCreateConnection(name: String): String {
+    log.info("Searching for existing API connection named: {}", name)
     var connectionQN = ""
     try {
-        val found = Connection.findByName(apiName, AtlanConnectorType.API)
+        val found = Connection.findByName(name, AtlanConnectorType.API)
         if (found.size > 1) {
-            log.warn(" ... found multiple API connections with the name {} — using only the first.", apiName)
+            log.warn(" ... found multiple API connections with the name {} — using only the first.", name)
         }
         connectionQN = found[0].qualifiedName
-        log.info(" ... re-using: {} ({})", apiName, connectionQN)
+        log.info(" ... re-using: {} ({})", name, connectionQN)
     } catch (e: NotFoundException) {
         log.info(" ... none found, creating a new API connection")
         val toCreate = Connection.creator(
-            apiName,
+            name,
             AtlanConnectorType.API,
             listOf(Atlan.getDefaultClient().roleCache.getIdForName("\$admin")),
             null,
