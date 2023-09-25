@@ -9,10 +9,6 @@ plugins {
 tasks {
     shadowJar {
         isZip64 = true
-        manifest {
-            attributes["Main-Class"] = "DuplicateDetector"
-        }
-
         archiveFileName.set(jarFile)
         destinationDirectory.set(file(jarPath))
         dependencies {
