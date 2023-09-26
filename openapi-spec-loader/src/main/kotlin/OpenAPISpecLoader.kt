@@ -7,7 +7,6 @@ import com.atlan.model.assets.APIPath
 import com.atlan.model.assets.APISpec
 import com.atlan.model.assets.Connection
 import com.atlan.model.core.AssetMutationResponse
-import com.atlan.model.enums.AtlanConnectorType
 import com.atlan.util.AssetBatch
 import io.swagger.v3.oas.models.OpenAPI
 import io.swagger.v3.oas.models.Operation
@@ -27,66 +26,45 @@ fun main() {
     Utils.setClient()
     Utils.setWorkflowOpts()
 
-    val connectionName = Utils.getEnvVar("CONNECTION_NAME", "")
     val specUrl = Utils.getEnvVar("SPEC_URL", "")
     val batchSize = Utils.getEnvVar("BATCH_SIZE", "50").toInt()
-
-    if (connectionName == "" || specUrl == "") {
-        log.error("Missing required parameter — you must provide BOTH a connection name and specification URL.")
-        exitProcess(1)
+    val providedConnectionQN = Utils.getEnvVar("CONNECTION_QUALIFIED_NAME", "")
+    val connectionQN: String
+    if (providedConnectionQN != "") {
+        try {
+            // Ensure the connection exists before proceeding
+            Connection.get(Atlan.getDefaultClient(), providedConnectionQN, false)
+        } catch (e: NotFoundException) {
+            log.error("Unable to find connection with the provided qualifiedName: {}", providedConnectionQN, e)
+            exitProcess(1)
+        }
+        connectionQN = providedConnectionQN
+    } else {
+        val connectionString = Utils.getEnvVar("CONNECTION", "")
+        connectionQN = if (connectionString != "") {
+            // Create the connection if we have been requested to create a new one
+            val toCreate = Atlan.getDefaultClient().readValue(connectionString, Connection::class.java)
+            try {
+                val response = toCreate.save().block()
+                response.getResult(toCreate).qualifiedName
+            } catch (e: AtlanException) {
+                log.error("Unable to create connection: {}", toCreate.name)
+                exitProcess(2)
+            }
+        } else {
+            ""
+        }
     }
 
-    log.info("Loading OpenAPI specification {} from: {}", connectionName, specUrl)
-
-    val connectionQN = findOrCreateConnection(connectionName)
-    val parser = OpenAPISpecReader(specUrl)
-    loadOpenAPISpec(connectionQN, parser, batchSize)
-}
-
-/**
- * Find an existing connection, or create a new one if an existing connection does not already exist.
- *
- * @param name of the connection (type is fixed as API)
- * @return the qualifiedName of the connection
- */
-fun findOrCreateConnection(name: String): String {
-    log.info("Searching for existing API connection named: {}", name)
-    var connectionQN = ""
-    try {
-        val found = Connection.findByName(name, AtlanConnectorType.API)
-        if (found.size > 1) {
-            log.warn(" ... found multiple API connections with the name {} — using only the first.", name)
-        }
-        connectionQN = found[0].qualifiedName
-        log.info(" ... re-using: {} ({})", name, connectionQN)
-    } catch (e: NotFoundException) {
-        log.info(" ... none found, creating a new API connection")
-        val toCreate = Connection.creator(
-            name,
-            AtlanConnectorType.API,
-            listOf(Atlan.getDefaultClient().roleCache.getIdForName("\$admin")),
-            null,
-            null,
-        ).build()
-        try {
-            val response = toCreate.save().block()
-            if (response != null && response.createdAssets.size == 1) {
-                connectionQN = response.createdAssets[0].qualifiedName
-                log.info(" ... created connection: {}", connectionQN)
-            }
-        } catch (create: AtlanException) {
-            log.error("Unable to create aa connection for the API.", create)
-            exitProcess(2)
-        }
-    } catch (find: AtlanException) {
-        log.error("Unable to even attempt to find an existing connection for the API.", find)
+    if (connectionQN == "" || specUrl == "") {
+        log.error("Missing required parameter - you must provide BOTH a connection name and specification URL.")
         exitProcess(3)
     }
-    if (connectionQN == "") {
-        log.error("Unable to find an existing or create a new connection for the API.")
-        exitProcess(4)
-    }
-    return connectionQN
+
+    log.info("Loading OpenAPI specification from {} into: {}", specUrl, connectionQN)
+
+    val parser = OpenAPISpecReader(specUrl)
+    loadOpenAPISpec(connectionQN, parser, batchSize)
 }
 
 /**
@@ -123,7 +101,7 @@ fun loadOpenAPISpec(connectionQN: String, spec: OpenAPISpecReader, batchSize: In
         }
     } catch (e: AtlanException) {
         log.error("Unable to save the APISpec.", e)
-        exitProcess(5)
+        exitProcess(4)
     }
     val batch = AssetBatch(Atlan.getDefaultClient(), APIPath.TYPE_NAME, batchSize, false, AssetBatch.CustomMetadataHandling.MERGE, true)
     val totalCount = spec.paths?.size!!.toLong()
