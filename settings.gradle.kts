@@ -11,6 +11,7 @@ plugins {
 
 rootProject.name = "atlan-kotlin-samples"
 include("common")
+include("api-token-connection-admin")
 include("duplicate-detector")
 include("migration-assistant")
 include("openapi-spec-loader")
