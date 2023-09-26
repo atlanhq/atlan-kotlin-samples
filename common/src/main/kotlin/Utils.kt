@@ -1,10 +1,14 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 /* Copyright 2023 Atlan Pte. Ltd. */
 import com.atlan.Atlan
+import com.atlan.exception.AtlanException
+import com.atlan.exception.NotFoundException
+import com.atlan.model.assets.Connection
 import mu.KLogger
 import mu.KotlinLogging
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.math.round
+import kotlin.system.exitProcess
 
 private val log = KotlinLogging.logger {}
 
@@ -109,5 +113,46 @@ object Utils {
             map["BATCH_SIZE"] = "50"
         }
         return map
+    }
+
+    /**
+     * Either reuse (top priority) or create a new connection, based on the parameters provided.
+     * Note that this method will exit if:
+     * - it is unable to find a connection with the specified qualifiedName (rc = 1)
+     * - it is unable to create a new connection with the specified details (rc = 2)
+     *
+     * @param varForReuse name of the environment variable that should contain a connection qualifiedName, to reuse an existing connection
+     * @param varForCreate name of the environment variable that should contain a full connection object, to create a new connection
+     * @return the qualifiedName of the connection to use, whether reusing or creating, or an empty string if neither variable has any data in it
+     */
+    fun createOrReuseConnection(varForReuse: String, varForCreate: String): String {
+        val connectionQN: String
+        val providedConnectionQN = getEnvVar(varForReuse, "")
+        if (providedConnectionQN != "") {
+            try {
+                log.info("Attempting to reuse connection: {}", providedConnectionQN)
+                Connection.get(Atlan.getDefaultClient(), providedConnectionQN, false)
+            } catch (e: NotFoundException) {
+                log.error("Unable to find connection with the provided qualifiedName: {}", providedConnectionQN, e)
+                exitProcess(1)
+            }
+            connectionQN = providedConnectionQN
+        } else {
+            val connectionString = getEnvVar(varForCreate, "")
+            connectionQN = if (connectionString != "") {
+                log.info("Attempting to create new connection: {}", connectionString)
+                val toCreate = Atlan.getDefaultClient().readValue(connectionString, Connection::class.java)
+                try {
+                    val response = toCreate.save().block()
+                    response.getResult(toCreate).qualifiedName
+                } catch (e: AtlanException) {
+                    log.error("Unable to create connection: {}", toCreate.name)
+                    exitProcess(2)
+                }
+            } else {
+                ""
+            }
+        }
+        return connectionQN
     }
 }

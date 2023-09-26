@@ -2,10 +2,8 @@
 /* Copyright 2023 Atlan Pte. Ltd. */
 import com.atlan.Atlan
 import com.atlan.exception.AtlanException
-import com.atlan.exception.NotFoundException
 import com.atlan.model.assets.APIPath
 import com.atlan.model.assets.APISpec
-import com.atlan.model.assets.Connection
 import com.atlan.model.core.AssetMutationResponse
 import com.atlan.util.AssetBatch
 import io.swagger.v3.oas.models.OpenAPI
@@ -28,33 +26,7 @@ fun main() {
 
     val specUrl = Utils.getEnvVar("SPEC_URL", "")
     val batchSize = Utils.getEnvVar("BATCH_SIZE", "50").toInt()
-    val providedConnectionQN = Utils.getEnvVar("CONNECTION_QUALIFIED_NAME", "")
-    val connectionQN: String
-    if (providedConnectionQN != "") {
-        try {
-            // Ensure the connection exists before proceeding
-            Connection.get(Atlan.getDefaultClient(), providedConnectionQN, false)
-        } catch (e: NotFoundException) {
-            log.error("Unable to find connection with the provided qualifiedName: {}", providedConnectionQN, e)
-            exitProcess(1)
-        }
-        connectionQN = providedConnectionQN
-    } else {
-        val connectionString = Utils.getEnvVar("CONNECTION", "")
-        connectionQN = if (connectionString != "") {
-            // Create the connection if we have been requested to create a new one
-            val toCreate = Atlan.getDefaultClient().readValue(connectionString, Connection::class.java)
-            try {
-                val response = toCreate.save().block()
-                response.getResult(toCreate).qualifiedName
-            } catch (e: AtlanException) {
-                log.error("Unable to create connection: {}", toCreate.name)
-                exitProcess(2)
-            }
-        } else {
-            ""
-        }
-    }
+    val connectionQN = Utils.createOrReuseConnection("CONNECTION_QUALIFIED_NAME", "CONNECTION")
 
     if (connectionQN == "" || specUrl == "") {
         log.error("Missing required parameter - you must provide BOTH a connection name and specification URL.")
