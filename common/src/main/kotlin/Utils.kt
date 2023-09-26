@@ -152,6 +152,9 @@ object Utils {
                 } catch (e: IOException) {
                     log.error("Unable to deserialize the connection details: {}", connectionString, e)
                     exitProcess(2)
+                } catch (e: IllegalArgumentException) {
+                    log.error("Unable to deserialize the connection details: {}", connectionString, e)
+                    exitProcess(2)
                 } catch (e: AtlanException) {
                     log.error("Unable to create connection: {}", connectionString, e)
                     exitProcess(3)
