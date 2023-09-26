@@ -26,11 +26,11 @@ fun main() {
 
     val specUrl = Utils.getEnvVar("SPEC_URL", "")
     val batchSize = Utils.getEnvVar("BATCH_SIZE", "50").toInt()
-    val connectionQN = Utils.createOrReuseConnection("CONNECTION_QUALIFIED_NAME", "CONNECTION")
+    val connectionQN = Utils.createOrReuseConnection("CONNECTION_USAGE", "CONNECTION_QUALIFIED_NAME", "CONNECTION")
 
     if (connectionQN == "" || specUrl == "") {
         log.error("Missing required parameter - you must provide BOTH a connection name and specification URL.")
-        exitProcess(3)
+        exitProcess(4)
     }
 
     log.info("Loading OpenAPI specification from {} into: {}", specUrl, connectionQN)
@@ -73,7 +73,7 @@ fun loadOpenAPISpec(connectionQN: String, spec: OpenAPISpecReader, batchSize: In
         }
     } catch (e: AtlanException) {
         log.error("Unable to save the APISpec.", e)
-        exitProcess(4)
+        exitProcess(5)
     }
     val batch = AssetBatch(Atlan.getDefaultClient(), APIPath.TYPE_NAME, batchSize, false, AssetBatch.CustomMetadataHandling.MERGE, true)
     val totalCount = spec.paths?.size!!.toLong()
