@@ -7,6 +7,7 @@ import com.atlan.model.assets.Connection
 import mu.KLogger
 import mu.KotlinLogging
 import java.io.IOException
+import java.util.concurrent.ThreadLocalRandom
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.math.round
 import kotlin.system.exitProcess
@@ -147,6 +148,9 @@ object Utils {
                 log.info("Attempting to create new connection...")
                 try {
                     val toCreate = Atlan.getDefaultClient().readValue(connectionString, Connection::class.java)
+                        .toBuilder()
+                        .guid("-${ThreadLocalRandom.current().nextLong(0, Long.MAX_VALUE - 1)}")
+                        .build()
                     val response = toCreate.save().block()
                     response.getResult(toCreate).qualifiedName
                 } catch (e: IOException) {
