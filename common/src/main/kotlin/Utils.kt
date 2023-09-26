@@ -6,6 +6,7 @@ import com.atlan.exception.NotFoundException
 import com.atlan.model.assets.Connection
 import mu.KLogger
 import mu.KotlinLogging
+import java.io.IOException
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.math.round
 import kotlin.system.exitProcess
@@ -119,16 +120,19 @@ object Utils {
      * Either reuse (top priority) or create a new connection, based on the parameters provided.
      * Note that this method will exit if:
      * - it is unable to find a connection with the specified qualifiedName (rc = 1)
-     * - it is unable to create a new connection with the specified details (rc = 2)
+     * - it is unable to even parse the specified connection details (rc = 2)
+     * - it is unable to create a new connection with the specified details (rc = 3)
      *
+     * @param varForAction name of the environment variable containing the action to take: CREATE to create a new connection, or REUSE to reuse an existing connection
      * @param varForReuse name of the environment variable that should contain a connection qualifiedName, to reuse an existing connection
      * @param varForCreate name of the environment variable that should contain a full connection object, to create a new connection
      * @return the qualifiedName of the connection to use, whether reusing or creating, or an empty string if neither variable has any data in it
      */
-    fun createOrReuseConnection(varForReuse: String, varForCreate: String): String {
+    fun createOrReuseConnection(varForAction: String, varForReuse: String, varForCreate: String): String {
+        val action = getEnvVar(varForAction, "REUSE")
         val connectionQN: String
-        val providedConnectionQN = getEnvVar(varForReuse, "")
-        if (providedConnectionQN != "") {
+        if (action == "REUSE") {
+            val providedConnectionQN = getEnvVar(varForReuse, "")
             try {
                 log.info("Attempting to reuse connection: {}", providedConnectionQN)
                 Connection.get(Atlan.getDefaultClient(), providedConnectionQN, false)
@@ -140,14 +144,17 @@ object Utils {
         } else {
             val connectionString = getEnvVar(varForCreate, "")
             connectionQN = if (connectionString != "") {
-                log.info("Attempting to create new connection: {}", connectionString)
-                val toCreate = Atlan.getDefaultClient().readValue(connectionString, Connection::class.java)
+                log.info("Attempting to create new connection...")
                 try {
+                    val toCreate = Atlan.getDefaultClient().readValue(connectionString, Connection::class.java)
                     val response = toCreate.save().block()
                     response.getResult(toCreate).qualifiedName
-                } catch (e: AtlanException) {
-                    log.error("Unable to create connection: {}", toCreate.name)
+                } catch (e: IOException) {
+                    log.error("Unable to deserialize the connection details: {}", connectionString, e)
                     exitProcess(2)
+                } catch (e: AtlanException) {
+                    log.error("Unable to create connection: {}", connectionString, e)
+                    exitProcess(3)
                 }
             } else {
                 ""
