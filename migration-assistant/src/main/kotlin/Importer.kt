@@ -15,7 +15,14 @@ class Importer : AssetLoader() {
 
     /** {@inheritDoc} */
     override fun getAttributesToOverwrite(): MutableList<AtlanField> {
-        TODO("Not yet implemented")
+        return mutableListOf() // TODO: take these in from workflow config
+    }
+
+    /** {@inheritDoc} */
+    override fun parseParametersFromEvent(event: MutableMap<String, String>) {
+        // We intentionally do NOT call the superclass, to avoid forcing an API-token based client setup
+        // ... and we just fix a filename here rather than generating one with a timestamp
+        filename = event.getOrDefault("FILENAME", "")
     }
 }
 
