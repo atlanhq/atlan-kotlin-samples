@@ -30,6 +30,7 @@ tasks {
             include(dependency("com.atlan:atlan-java-samples:.*"))
             include(dependency("de.siegmar:fastcsv:.*"))
             include(dependency("com.fasterxml.jackson.module:jackson-module-kotlin:.*"))
+            include(dependency("org.jetbrains.kotlin:kotlin-reflect:.*"))
         }
         mergeServiceFiles()
     }
