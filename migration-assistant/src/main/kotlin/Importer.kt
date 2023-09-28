@@ -1,7 +1,11 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 /* Copyright 2023 Atlan Pte. Ltd. */
 import com.atlan.model.fields.AtlanField
+import com.atlan.model.fields.SearchableField
 import com.atlan.samples.loaders.AssetLoader
+import mu.KotlinLogging
+
+private val log = KotlinLogging.logger {}
 
 /**
  * Actually run the importer.
@@ -11,8 +15,16 @@ fun main() {
     Utils.setClient()
     Utils.setWorkflowOpts()
 
-    val importer = Importer()
-    importer.handleRequest(Utils.environmentVariables(), null)
+    val envVars = Utils.environmentVariables()
+    val toOverwrite = envVars.getOrDefault("ATTR_TO_OVERWRITE", "")
+
+    log.info("Adding attributes to be cleared if blank: {}", toOverwrite)
+
+    val attrsToOverwrite = mutableListOf<String>()
+    // TODO: parse toOverwrite into a list
+
+    val importer = Importer(attrsToOverwrite)
+    importer.handleRequest(envVars, null)
 }
 
 /**
@@ -22,12 +34,22 @@ fun main() {
  * By default, any blank values in a cell in the CSV file will be ignored. If you would like any
  * particular column's blank values to actually overwrite (i.e. remove) existing values for that
  * asset in Atlan, then add that column's field to getAttributesToOverwrite.
+ *
+ * @param attrNamesToOverwrite names of the attributes in Atlan to overwrite
  */
-class Importer : AssetLoader() {
+class Importer(attrNamesToOverwrite: List<String>) : AssetLoader() {
+
+    private val attrsToOverwrite: MutableList<AtlanField> = mutableListOf()
+
+    init {
+        for (name in attrNamesToOverwrite) {
+            attrsToOverwrite.add(SearchableField(name, name))
+        }
+    }
 
     /** {@inheritDoc} */
     override fun getAttributesToOverwrite(): MutableList<AtlanField> {
-        return mutableListOf() // TODO: take these in from workflow config
+        return attrsToOverwrite
     }
 
     /** {@inheritDoc} */
