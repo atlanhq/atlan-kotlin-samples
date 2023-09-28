@@ -3,6 +3,8 @@
 import com.atlan.model.fields.AtlanField
 import com.atlan.model.fields.SearchableField
 import com.atlan.samples.loaders.AssetLoader
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 import mu.KotlinLogging
 
 private val log = KotlinLogging.logger {}
@@ -19,9 +21,11 @@ fun main() {
     val toOverwrite = envVars.getOrDefault("ATTR_TO_OVERWRITE", "")
 
     log.info("Adding attributes to be cleared if blank: {}", toOverwrite)
-
-    val attrsToOverwrite = mutableListOf<String>()
-    // TODO: parse toOverwrite into a list
+    val attrsToOverwrite: List<String> = if (toOverwrite != "") {
+        jacksonObjectMapper().readValue(toOverwrite)
+    } else {
+        listOf()
+    }
 
     val importer = Importer(attrsToOverwrite)
     importer.handleRequest(envVars, null)

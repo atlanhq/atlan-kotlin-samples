@@ -18,6 +18,7 @@ repositories {
 dependencies {
     implementation(project(":common"))
     implementation("com.atlan:atlan-java-samples:1.3.1-SNAPSHOT")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.15.2")
 }
 
 tasks {
@@ -28,6 +29,7 @@ tasks {
         dependencies {
             include(dependency("com.atlan:atlan-java-samples:.*"))
             include(dependency("de.siegmar:fastcsv:.*"))
+            include(dependency("com.fasterxml.jackson.module:jackson-module-kotlin:.*"))
         }
         mergeServiceFiles()
     }
