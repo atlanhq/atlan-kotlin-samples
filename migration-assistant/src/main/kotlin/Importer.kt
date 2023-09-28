@@ -4,6 +4,18 @@ import com.atlan.model.fields.AtlanField
 import com.atlan.samples.loaders.AssetLoader
 
 /**
+ * Actually run the importer.
+ * Note: all parameters should be passed through environment variables.
+ */
+fun main() {
+    Utils.setClient()
+    Utils.setWorkflowOpts()
+
+    val importer = Importer()
+    importer.handleRequest(Utils.environmentVariables(), null)
+}
+
+/**
  * Import assets into Atlan from a provided CSV file.
  *
  * Only the assets and attributes in the provided CSV file will attempt to be loaded.
@@ -24,13 +36,4 @@ class Importer : AssetLoader() {
         // ... and we just fix a filename here rather than generating one with a timestamp
         filename = event.getOrDefault("FILENAME", "")
     }
-}
-
-/**
- * Actually run the importer.
- * Note: all parameters should be passed through environment variables.
- */
-fun main() {
-    val importer = Importer()
-    importer.handleRequest(Utils.environmentVariables(), null)
 }
