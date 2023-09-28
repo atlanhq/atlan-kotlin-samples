@@ -17,18 +17,33 @@ fun main() {
     Utils.setClient()
     Utils.setWorkflowOpts()
 
-    val envVars = Utils.environmentVariables()
-    val toOverwrite = envVars.getOrDefault("ATTR_TO_OVERWRITE", "")
+    val attrsToOverwrite = attributesToClear("ATTR_TO_OVERWRITE")
+    log.info("Adding attributes to be cleared, if blank: {}", attrsToOverwrite)
+    val importer = Importer(attrsToOverwrite)
+    importer.handleRequest(Utils.environmentVariables(), null)
+}
 
-    log.info("Adding attributes to be cleared if blank: {}", toOverwrite)
-    val attrsToOverwrite: List<String> = if (toOverwrite != "") {
+/**
+ * Determine which (if any) attributes should be cleared (removed) if they are empty in the input file.
+ *
+ * @param varName name of environment variable containing the list of attributes
+ * @return parsed list of attribute names to be cleared
+ */
+fun attributesToClear(varName: String): List<String> {
+    val toOverwrite = Utils.getEnvVar(varName, "")
+    val attrsToOverwrite: MutableList<String> = if (toOverwrite != "") {
         jacksonObjectMapper().readValue(toOverwrite)
     } else {
-        listOf()
+        mutableListOf()
     }
-
-    val importer = Importer(attrsToOverwrite)
-    importer.handleRequest(envVars, null)
+    if (attrsToOverwrite.contains("certificateStatus")) {
+        attrsToOverwrite.add("certificateStatusMessage")
+    }
+    if (attrsToOverwrite.contains("announcementType")) {
+        attrsToOverwrite.add("announcementTitle")
+        attrsToOverwrite.add("announcementMessage")
+    }
+    return attrsToOverwrite
 }
 
 /**
