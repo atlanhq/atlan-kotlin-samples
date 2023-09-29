@@ -11,8 +11,12 @@ import com.atlan.model.assets.Procedure
 import com.atlan.model.fields.AtlanField
 import com.atlan.model.fields.CustomMetadataField
 import com.atlan.model.search.FluentSearch
-import com.atlan.samples.reporters.AssetReporter
+import mu.KotlinLogging
 import java.io.File
+import java.util.stream.Collectors
+import java.util.stream.Stream
+
+private val log = KotlinLogging.logger {}
 
 /**
  * Actually run the export, taking all settings from environment variables.
@@ -22,8 +26,8 @@ fun main() {
     Utils.setClient()
     Utils.setWorkflowOpts()
 
-    val exporter = Exporter()
-    exporter.handleRequest(Utils.environmentVariables(), null)
+    val exporter = KExporter(Utils.environmentVariables())
+    exporter.export()
 }
 
 /**
@@ -34,10 +38,35 @@ fun main() {
  * In both cases the overall scope of assets to include is restricted by the qualifiedName prefix
  * specified by the QN_PREFIX environment variable.
  */
-class Exporter : AssetReporter() {
+class KExporter(private val config: Map<String, String>) {
 
-    /** {@inheritDoc} */
-    override fun getAssetsToExtract(event: Map<String, String>): FluentSearch.FluentSearchBuilder<*, *> {
+    private val batchSize = config.getOrDefault("BATCH_SIZE", "50").toInt()
+    private val filename = "tmp" + File.separator + "asset-export.csv"
+
+    fun export() {
+        val assets = getAssetsToExtract(config)
+            .pageSize(batchSize)
+            .includesOnResults(getAttributesToExtract())
+            .includeOnRelations(Asset.QUALIFIED_NAME)
+            .includesOnRelations(getRelatedAttributesToExtract())
+
+        CSVWriter(filename).use { csv ->
+            val headerNames = Stream.of(Asset.QUALIFIED_NAME, Asset.TYPE_NAME)
+                .map(AtlanField::getAtlanFieldName)
+                .collect(Collectors.toList())
+            headerNames.addAll(
+                getAttributesToExtract().stream()
+                    .map { f -> getHeaderForField(f) }
+                    .collect(Collectors.toList()),
+            )
+            csv.writeHeader(headerNames)
+            val start = System.currentTimeMillis()
+            csv.streamAssets(assets.stream(true), getAttributesToExtract(), assets.count(), batchSize, log)
+            log.info("Total time taken: {} ms", System.currentTimeMillis() - start)
+        }
+    }
+
+    private fun getAssetsToExtract(event: Map<String, String>): FluentSearch.FluentSearchBuilder<*, *> {
         val scope = event.getOrDefault("EXPORT_SCOPE", "ENRICHED_ONLY")
         val builder = Atlan.getDefaultClient().assets
             .select()
@@ -63,8 +92,7 @@ class Exporter : AssetReporter() {
         return builder
     }
 
-    /** {@inheritDoc} */
-    override fun getAttributesToExtract(event: Map<String, String>): MutableList<AtlanField> {
+    private fun getAttributesToExtract(): MutableList<AtlanField> {
         val attributeList: MutableList<AtlanField> = mutableListOf(
             Asset.NAME,
             Asset.DESCRIPTION,
@@ -88,20 +116,12 @@ class Exporter : AssetReporter() {
         return attributeList
     }
 
-    /** {@inheritDoc} */
-    override fun getRelatedAttributesToExtract(event: Map<String, String>): MutableList<AtlanField> {
+    private fun getRelatedAttributesToExtract(): MutableList<AtlanField> {
         return mutableListOf(
             Asset.NAME, // for Link embedding
             Asset.DESCRIPTION, // for README embedding
             Link.LINK, // for Link embedding
         )
-    }
-
-    /** {@inheritDoc} */
-    override fun parseParametersFromEvent(event: MutableMap<String, String>) {
-        // We intentionally do NOT call the superclass, to avoid forcing an API-token based client setup
-        // ... and we just fix a filename here rather than generating one with a timestamp
-        filename = "tmp" + File.separator + "asset-export.csv"
     }
 }
 
