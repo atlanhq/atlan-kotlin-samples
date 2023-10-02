@@ -1,5 +1,5 @@
 val jarPath = "$rootDir/jars"
-val jarFile = "atlan-kotlin-samples-common-$version.jar"
+val jarFile = "common-$version.jar"
 
 plugins {
     id("atlan-kotlin-sample")

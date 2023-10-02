@@ -9,10 +9,16 @@ group = "com.atlan"
 
 repositories {
     mavenCentral()
+    maven {
+        url = uri("https://s01.oss.sonatype.org/content/repositories/snapshots/")
+        mavenContent {
+            snapshotsOnly()
+        }
+    }
 }
 
 dependencies {
-    implementation("com.atlan:atlan-java:1.3.1")
+    implementation("com.atlan:atlan-java:1.4.0-SNAPSHOT")
     implementation("io.github.microutils:kotlin-logging-jvm:3.0.5")
     runtimeOnly("org.apache.logging.log4j:log4j-core:2.20.0")
     runtimeOnly("org.apache.logging.log4j:log4j-slf4j2-impl:2.20.0")

@@ -1,5 +1,5 @@
 val jarPath = "$rootDir/jars"
-val jarFile = "migration-assistant-$version.jar"
+val jarFile = "serde-$version.jar"
 
 plugins {
     id("atlan-kotlin-sample")
@@ -8,9 +8,6 @@ plugins {
 
 dependencies {
     implementation(project(":common"))
-    implementation(project(":serde"))
-    implementation("de.siegmar:fastcsv:2.2.2")
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.15.2")
 }
 
 tasks {
@@ -19,8 +16,6 @@ tasks {
         archiveFileName.set(jarFile)
         destinationDirectory.set(file(jarPath))
         dependencies {
-            include(dependency("de.siegmar:fastcsv:.*"))
-            include(dependency("com.fasterxml.jackson.module:jackson-module-kotlin:.*"))
             include(dependency("org.jetbrains.kotlin:kotlin-reflect:.*"))
         }
         mergeServiceFiles()
