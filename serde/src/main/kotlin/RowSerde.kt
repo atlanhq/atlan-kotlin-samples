@@ -9,15 +9,22 @@ import com.atlan.model.fields.AtlanField
 import com.atlan.model.fields.CustomMetadataField
 import com.atlan.serde.Serde
 import mu.KotlinLogging
+import xformers.cell.AssetRefXformer
 import xformers.cell.CellXformer
 import xformers.cell.CellXformer.LIST_DELIMITER
 import java.lang.reflect.Method
-import java.util.regex.Pattern
+import java.util.concurrent.ThreadLocalRandom
 
 private val log = KotlinLogging.logger {}
 
 const val CM_HEADING_DELIMITER = "::"
 
+/**
+ * Retrieve the name to use for the header for a particular field.
+ *
+ * @param field for which to determine the header name
+ * @return the name of the header to use for that field
+ */
 fun getHeaderForField(field: AtlanField): String {
     return if (field is CustomMetadataField) {
         // For custom metadata, translate the header to human-readable names
@@ -27,8 +34,20 @@ fun getHeaderForField(field: AtlanField): String {
     }
 }
 
+/**
+ * Class to generally serialize an asset object into a row of tabular data.
+ * Note: this will always serialize the qualifiedName and type of the asset as the first two columns.
+ *
+ * @param asset the asset to be serialized
+ * @param fields the full list of fields to be serialized from the asset, in the order they should be serialized
+ */
 class RowSerializer(private val asset: Asset, private val fields: List<AtlanField>) {
 
+    /**
+     * Actually serialize the provided inputs into a list of string values.
+     *
+     * @return the list of string values giving a row-based tabular representation of the asset
+     */
     fun getRow(): Iterable<String> {
         val row = mutableListOf<String>()
         row.add(FieldSerde.getValueForField(asset, Asset.QUALIFIED_NAME))
@@ -42,12 +61,35 @@ class RowSerializer(private val asset: Asset, private val fields: List<AtlanFiel
     }
 }
 
-class RowDeserializer(private val heading: List<String>, private val row: List<String>) {
+data class AssetIdentity(val typeName: String, val qualifiedName: String)
 
-    private val typeIdx: Int = heading.indexOf(Asset.TYPE_NAME.atlanFieldName)
-    private val qnIdx: Int = heading.indexOf(Asset.QUALIFIED_NAME.atlanFieldName)
+data class RowDeserialization(
+    val identity: AssetIdentity,
+    val primary: AssetBuilder<*, *>,
+    /** Field name > related asset */
+    val related: MutableMap<String, Asset> = mutableMapOf(),
+    /** Asset identity > relationship fields */
+    val delete: MutableSet<AtlanField> = mutableSetOf(),
+)
 
-    fun getAsset(): Asset? {
+/**
+ * Class to generally deserialize an asset object from a row of tabular data.
+ * Note: at least the qualifiedName and type of the asset must be present in every row.
+ *
+ * @param heading the list of field names, in the order they appear as columns in the tabular data
+ * @param row values for each field in a single row, representing a single asset
+ * @param typeIdx the numeric index for the type in the list of columns
+ * @param qnIdx the numeric index for the qualifiedName in the list of columns
+ */
+class RowDeserializer(private val heading: List<String>, private val row: List<String>, private val typeIdx: Int, private val qnIdx: Int) {
+
+    /**
+     * Actually deserialize the provided inputs into a builder for an asset object.
+     *
+     * @return the builders, for the primary asset object (already-populated with the metadata from the row of tabular data)
+     *         and any related asset builders (for example, for READMEs, Links, or other assets that were denormalized in the tabular form)
+     */
+    fun getAssets(): RowDeserialization? {
         val typeName = row.getOrElse(typeIdx) { "" }
         val qualifiedName = row.getOrElse(qnIdx) { "" }
         if (typeName == "" || qualifiedName == "") {
@@ -56,6 +98,8 @@ class RowDeserializer(private val heading: List<String>, private val row: List<S
             val assetClass = Serde.getAssetClassForType(typeName)
             val method = assetClass.getMethod("_internal")
             val builder = method.invoke(null) as AssetBuilder<*, *>
+            builder.guid("-" + ThreadLocalRandom.current().nextLong(0, Long.MAX_VALUE - 1))
+            val deserialization = RowDeserialization(AssetIdentity(typeName, qualifiedName), builder)
             val customMetadataMap = mutableMapOf<String, CustomMetadataAttributesBuilder<*, *>>()
             for (i in heading.indices) {
                 val fieldName = heading[i]
@@ -63,7 +107,7 @@ class RowDeserializer(private val heading: List<String>, private val row: List<S
                     val rValue = row[i]
                     if (fieldName.contains(CM_HEADING_DELIMITER)) {
                         // Custom metadata field...
-                        val tokens = fieldName.split(Pattern.quote(CM_HEADING_DELIMITER))
+                        val tokens = fieldName.split(CM_HEADING_DELIMITER)
                         val setName = tokens[0]
                         val attrName = tokens[1]
                         if (!customMetadataMap.containsKey(setName)) {
@@ -78,11 +122,14 @@ class RowDeserializer(private val heading: List<String>, private val row: List<S
                         if (setter != null) {
                             val value = FieldSerde.getValueFromCell(rValue, setter)
                             if (value != null) {
-                                // TODO: handle special cases:
-                                //  - READMEs (create & relate)
-                                //  - Links (create & relate)
-                                //  - AtlanTags (no idempotent method to set them)
-                                ReflectionCache.setValue(builder, deserializedFieldName, value)
+                                if (AssetRefXformer.requiresHandling(value)) {
+                                    deserialization.related[fieldName] = value as Asset
+                                } else {
+                                    // Only set the value on the asset directly if it does not require
+                                    // special handling, otherwise leave it to the special handling
+                                    // to set the value (later)
+                                    ReflectionCache.setValue(builder, deserializedFieldName, value)
+                                }
                             }
                         }
                     }
@@ -93,50 +140,24 @@ class RowDeserializer(private val heading: List<String>, private val row: List<S
                     builder.customMetadata(key, value.build())
                 }
             }
-            return builder.build()
-            /* This needs to be moved to specific logic of the import
-            for (field in getAttributesToOverwrite()) {
-                try {
-                    val getter = ReflectionCache.getGetter(
-                        Serde.getAssetClassForType(candidate.typeName), field.atlanFieldName
-                    )
-                    // TODO: double-check this works for empty lists, too?
-                    if (getter.invoke(candidate) == null) {
-                        builder.nullField(field.atlanFieldName)
-                    }
-                } catch (e: ClassNotFoundException) {
-                    log.error(
-                        "Unknown type {} — cannot clear {}.",
-                        candidate.typeName,
-                        field.atlanFieldName,
-                        e
-                    )
-                } catch (e: IllegalAccessException) {
-                    log.error(
-                        "Unable to clear {} on: {}::{}",
-                        field.atlanFieldName,
-                        candidate.typeName,
-                        candidate.qualifiedName,
-                        e
-                    )
-                } catch (e: InvocationTargetException) {
-                    log.error(
-                        "Unable to clear {} on: {}::{}",
-                        field.atlanFieldName,
-                        candidate.typeName,
-                        candidate.qualifiedName,
-                        e
-                    )
-                }
-            }
-            return builder.build()*/
+            return deserialization
         }
         return null
     }
 }
 
+/**
+ * Static object to (de)serialize a single field's value for a given asset.
+ */
 private object FieldSerde {
 
+    /**
+     * Serialize a single field's value from an asset object.
+     *
+     * @param asset from which to serialize the value
+     * @param field attribute within the asset to serialize
+     * @return the serialized form of that field's value, from that asset
+     */
     fun getValueForField(asset: Asset, field: AtlanField): String {
         val value = if (field is CustomMetadataField) {
             asset.getCustomMetadata(field.setName, field.attributeName)
@@ -147,6 +168,13 @@ private object FieldSerde {
         return CellXformer.encode(asset.guid, value)
     }
 
+    /**
+     * Deserialize a single field's value from a row of tabular data.
+     *
+     * @param value the single field's value
+     * @param setter the method on the asset that will be used to set the value onto the object
+     * @return the deserialized form of that field's value
+     */
     fun getValueFromCell(value: String, setter: Method): Any? {
         val paramClass = ReflectionCache.getParameterOfMethod(setter)
         var innerClass: Class<*>? = null
@@ -158,6 +186,13 @@ private object FieldSerde {
         return CellXformer.decode(value, paramClass, innerClass, fieldName)
     }
 
+    /**
+     * Deserialize a single field's value from a row of tabular data, when that field
+     * is stored as custom metadata.
+     *
+     * @param value the single field's value
+     * @return the deserialized form of that field's value
+     */
     fun getCustomMetadataValueFromString(value: String?): Any? {
         return if (value.isNullOrEmpty()) {
             null
@@ -172,7 +207,7 @@ private object FieldSerde {
         return if (value.isNullOrEmpty()) {
             listOf()
         } else {
-            value.split(Pattern.quote(LIST_DELIMITER))
+            value.split(LIST_DELIMITER)
         }
     }
 }

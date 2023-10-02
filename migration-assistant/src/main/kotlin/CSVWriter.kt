@@ -1,7 +1,6 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 /* Copyright 2023 Atlan Pte. Ltd. */
 import com.atlan.model.assets.Asset
-import com.atlan.model.fields.AtlanField
 import de.siegmar.fastcsv.writer.CsvWriter
 import de.siegmar.fastcsv.writer.LineDelimiter
 import de.siegmar.fastcsv.writer.QuoteStrategy
@@ -50,12 +49,12 @@ class CSVWriter @JvmOverloads constructor(path: String, fieldSeparator: Char = '
      * (For the highest performance, we recommend sending in a parallel stream of assets.)
      *
      * @param stream of assets, typically from a FluentSearch (parallel stream recommended)
-     * @param fields list of fields to include for each asset, in the order they should be output on each row
+     * @param assetToRow translator from an asset object to a row of CSV values
      * @param totalAssetCount the total number of assets that will be output (used for logging / completion tracking)
      * @param pageSize the page size being used by the asset stream
      * @param logger through which to report the overall progress
      */
-    fun streamAssets(stream: Stream<Asset>, fields: List<AtlanField>, totalAssetCount: Long, pageSize: Int, logger: KLogger) {
+    fun streamAssets(stream: Stream<Asset>, assetToRow: RowGenerator, totalAssetCount: Long, pageSize: Int, logger: KLogger) {
         logger.info("Extracting a total of {} assets...", totalAssetCount)
         val count = AtomicLong(0)
         val map = ConcurrentHashMap<String, String>()
@@ -64,7 +63,7 @@ class CSVWriter @JvmOverloads constructor(path: String, fieldSeparator: Char = '
             if (duplicate != null) {
                 logger.warn("Hit a duplicate asset entry — there could be page skew: {}", duplicate)
             }
-            val values = RowSerializer(a, fields).getRow()
+            val values = assetToRow.buildFromAsset(a)
             synchronized(writer) { writer.writeRow(values) }
             Utils.logProgress(count, totalAssetCount, logger, pageSize)
         }

@@ -26,7 +26,7 @@ fun main() {
     Utils.setClient()
     Utils.setWorkflowOpts()
 
-    val exporter = KExporter(Utils.environmentVariables())
+    val exporter = Exporter(Utils.environmentVariables())
     exporter.export()
 }
 
@@ -37,14 +37,16 @@ fun main() {
  *
  * In both cases the overall scope of assets to include is restricted by the qualifiedName prefix
  * specified by the QN_PREFIX environment variable.
+ *
+ * @param config configuration to use for the exporter, typically driven by environment variables
  */
-class KExporter(private val config: Map<String, String>) {
+class Exporter(private val config: Map<String, String>) : RowGenerator {
 
     private val batchSize = config.getOrDefault("BATCH_SIZE", "50").toInt()
     private val filename = "tmp" + File.separator + "asset-export.csv"
 
     fun export() {
-        val assets = getAssetsToExtract(config)
+        val assets = getAssetsToExtract()
             .pageSize(batchSize)
             .includesOnResults(getAttributesToExtract())
             .includeOnRelations(Asset.QUALIFIED_NAME)
@@ -61,16 +63,16 @@ class KExporter(private val config: Map<String, String>) {
             )
             csv.writeHeader(headerNames)
             val start = System.currentTimeMillis()
-            csv.streamAssets(assets.stream(true), getAttributesToExtract(), assets.count(), batchSize, log)
+            csv.streamAssets(assets.stream(true), this, assets.count(), batchSize, log)
             log.info("Total time taken: {} ms", System.currentTimeMillis() - start)
         }
     }
 
-    private fun getAssetsToExtract(event: Map<String, String>): FluentSearch.FluentSearchBuilder<*, *> {
-        val scope = event.getOrDefault("EXPORT_SCOPE", "ENRICHED_ONLY")
+    private fun getAssetsToExtract(): FluentSearch.FluentSearchBuilder<*, *> {
+        val scope = config.getOrDefault("EXPORT_SCOPE", "ENRICHED_ONLY")
         val builder = Atlan.getDefaultClient().assets
             .select()
-            .where(Asset.QUALIFIED_NAME.startsWith(event.getOrDefault("QN_PREFIX", "default")))
+            .where(Asset.QUALIFIED_NAME.startsWith(config.getOrDefault("QN_PREFIX", "default")))
             .whereNot(FluentSearch.superTypes(listOf(IAccessControl.TYPE_NAME, INamespace.TYPE_NAME)))
             .whereNot(FluentSearch.assetTypes(listOf(AuthPolicy.TYPE_NAME, Procedure.TYPE_NAME, AtlanQuery.TYPE_NAME)))
         if (scope == "ENRICHED_ONLY") {
@@ -122,6 +124,16 @@ class KExporter(private val config: Map<String, String>) {
             Asset.DESCRIPTION, // for README embedding
             Link.LINK, // for Link embedding
         )
+    }
+
+    /**
+     * Generate a set of values for a row of CSV, based on the provided asset.
+     *
+     * @param asset the asset from which to generate the values
+     * @return the values, as an iterable set of strings
+     */
+    override fun buildFromAsset(asset: Asset): Iterable<String> {
+        return RowSerializer(asset, getAttributesToExtract()).getRow()
     }
 }
 

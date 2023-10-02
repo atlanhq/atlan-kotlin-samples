@@ -8,12 +8,10 @@ import com.atlan.model.enums.AtlanEnum
 import com.atlan.model.structs.AtlanStruct
 import java.io.IOException
 import java.util.*
-import java.util.regex.Pattern
 
 object CellXformer {
 
     const val LIST_DELIMITER = "\n"
-    private val LIST_REGEX: String = Pattern.quote(LIST_DELIMITER)
 
     fun encode(guid: String, value: Any?): String {
         return when (value) {
@@ -60,29 +58,9 @@ object CellXformer {
             // Start by checking whether the list is simple or complex
             val values = parseDelimitedList(value)
             val list = mutableListOf<Any>()
-            if (innerType!!.isInterface) {
-                // Relationships between assets are defined via interfaces, so this would mean
-                // there should be asset references
-                for (asset in values) {
-                    list.add(AssetRefXformer.decode(asset, fieldName))
-                }
-            } else if (AtlanEnum::class.java.isAssignableFrom(innerType)) {
-                for (enum in values) {
-                    val decoded = decode(enum, innerType, null, fieldName)
-                    if (decoded != null) {
-                        list.add(decoded)
-                    }
-                }
-            } else if (AtlanStruct::class.java.isAssignableFrom(innerType)) {
-                for (struct in values) {
-                    val decoded = decode(struct, innerType, null, fieldName)
-                    if (decoded != null) {
-                        list.add(decoded)
-                    }
-                }
-            } else if (AtlanTag::class.java.isAssignableFrom(innerType)) {
-                for (tag in values) {
-                    val decoded = decode(tag, innerType, null, fieldName)
+            if (innerType != null) {
+                for (element in values) {
+                    val decoded = decode(element, innerType, null, fieldName)
                     if (decoded != null) {
                         list.add(decoded)
                     }
@@ -103,6 +81,10 @@ object CellXformer {
             StructXformer.decode(value, type as Class<AtlanStruct>)
         } else if (AtlanTag::class.java.isAssignableFrom(type)) {
             AtlanTagXformer.decode(value)
+        } else if (type.isInterface) {
+            // Relationships between assets are defined via interfaces, so this would mean
+            // there should be asset references
+            AssetRefXformer.decode(value, fieldName)
         } else {
             throw IOException("Unhandled data type for $fieldName: $type")
         }
@@ -120,7 +102,7 @@ object CellXformer {
         return if (values.isNullOrEmpty()) {
             listOf()
         } else {
-            values.split(LIST_REGEX)
+            values.split(LIST_DELIMITER)
         }
     }
 }

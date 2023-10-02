@@ -3,12 +3,10 @@
 package xformers.cell
 
 import com.atlan.model.core.AtlanTag
-import java.util.regex.Pattern
 
 object AtlanTagXformer {
 
     private const val SETTINGS_DELIMITER = ">>"
-    private val SETTINGS_REGEX: String = Pattern.quote(SETTINGS_DELIMITER)
 
     fun encode(fromGuid: String, atlanTag: AtlanTag): String {
         val direct = fromGuid == atlanTag.entityGuid
@@ -25,7 +23,7 @@ object AtlanTagXformer {
     }
 
     fun decode(atlanTag: String): AtlanTag {
-        val tokens = atlanTag.split(SETTINGS_REGEX)
+        val tokens = atlanTag.split(SETTINGS_DELIMITER)
         return AtlanTag.builder()
             .typeName(tokens[0])
             .propagate(tokens[1].toBoolean())
