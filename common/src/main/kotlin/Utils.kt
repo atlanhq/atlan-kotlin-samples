@@ -27,16 +27,23 @@ object Utils {
     fun setClient() {
         val baseUrl = getEnvVar("ATLAN_BASE_URL", "INTERNAL")
         val apiToken = getEnvVar("ATLAN_API_KEY", "")
+        val userId = getEnvVar("ATLAN_USER_ID", "")
         Atlan.setBaseUrl(baseUrl)
-        if (apiToken.isEmpty()) {
-            val userId = getEnvVar("ATLAN_USER_ID", "")
-            log.info("No API token found, attempting to impersonate user: {}", userId)
-            val defClient = Atlan.getDefaultClient()
-            val userToken = defClient.impersonate.user(userId)
-            Atlan.setApiToken(userToken)
-        } else {
-            Atlan.setApiToken(apiToken)
+        val tokenToUse = when {
+            apiToken.isNotEmpty() -> {
+                log.info("Using provided API token for authentication.")
+                apiToken
+            }
+            userId.isNotEmpty() -> {
+                log.info("No API token found, attempting to impersonate user: {}", userId)
+                Atlan.getDefaultClient().impersonate.user(userId)
+            }
+            else -> {
+                log.info("No API token or impersonation user, attempting short-lived escalation.")
+                Atlan.getDefaultClient().impersonate.escalate()
+            }
         }
+        Atlan.setApiToken(tokenToUse)
     }
 
     /**
