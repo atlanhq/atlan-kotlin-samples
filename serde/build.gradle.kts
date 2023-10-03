@@ -8,6 +8,7 @@ plugins {
 
 dependencies {
     implementation(project(":common"))
+    api("com.fasterxml.jackson.module:jackson-module-kotlin:2.15.2")
 }
 
 tasks {
@@ -17,6 +18,7 @@ tasks {
         destinationDirectory.set(file(jarPath))
         dependencies {
             include(dependency("org.jetbrains.kotlin:kotlin-reflect:.*"))
+            include(dependency("com.fasterxml.jackson.module:jackson-module-kotlin:.*"))
         }
         mergeServiceFiles()
     }
