@@ -8,7 +8,7 @@ plugins {
 dependencies {
     implementation(project(":common"))
     implementation(project(":serde"))
-    implementation("io.numaproj.numaflow:numaflow-java:0.4.8")
+    implementation("io.numaproj.numaflow:numaflow-java:0.4.6")
 }
 
 tasks {
