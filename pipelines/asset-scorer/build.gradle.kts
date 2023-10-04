@@ -8,7 +8,6 @@ plugins {
 dependencies {
     implementation(project(":common"))
     implementation(project(":events"))
-    implementation("io.numaproj.numaflow:numaflow-java:0.4.6")
 }
 
 tasks {
