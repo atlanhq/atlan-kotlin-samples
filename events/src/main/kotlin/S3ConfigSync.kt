@@ -16,8 +16,10 @@ class S3ConfigSync(private val localPath: String, private val configPrefix: Stri
 
     /**
      * Download any configuration files from S3 into the running container.
+     *
+     * @return true if any files were synced, otherwise false
      */
-    fun sync() {
+    fun sync(): Boolean {
         logger.info("Syncing configuration from s3://$bucketName/$configPrefix to $localPath")
 
         val s3Client = S3Client.builder().region(Region.of(region)).build()
@@ -38,6 +40,8 @@ class S3ConfigSync(private val localPath: String, private val configPrefix: Stri
             }
         }
 
+        var anySynced = false
+
         s3FilesToDownload.forEach {
             val localFile = File(localPath, it)
             if (localFile.exists()) {
@@ -52,6 +56,8 @@ class S3ConfigSync(private val localPath: String, private val configPrefix: Stri
                 GetObjectRequest.builder().bucket(bucketName).key(s3Prefix).build(),
                 localFile.toPath(),
             )
+            anySynced = true
         }
+        return anySynced
     }
 }
