@@ -20,13 +20,11 @@ object VerificationEnforcer : AbstractNumaflowHandler(Handler) {
         logger.info("Looking for configuration in S3...")
         val config = S3ConfigSync("/tmp", Utils.getEnvVar("CONFIG_PREFIX", ""))
         if (!config.sync()) {
-            logger.info("... no configuration found, waiting ...")
+            logger.info("... no configuration found, will timeout pod and retry ...")
+        } else {
+            logger.info("Configuration found - synced to: /tmp/config.json")
+            FunctionServer().registerMapHandler(VerificationEnforcer).start()
         }
-        do {
-            Thread.sleep(60000)
-        } while (!config.sync())
-        logger.info("Configuration found - synced to: /tmp/config.json")
-        FunctionServer().registerMapHandler(VerificationEnforcer).start()
     }
 
     object Handler : AtlanEventHandler {

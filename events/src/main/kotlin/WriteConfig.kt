@@ -1,22 +1,29 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 /* Copyright 2023 Atlan Pte. Ltd. */
+import mu.KotlinLogging
 import java.io.File
 import java.io.FileOutputStream
 
 /**
- * Utility to synchronize one or more configuration files from the in-tenant S3 bucket
- * to the container that will run pipeline processing (to feed configuration into that container).
+ * Utility to write out configuration files received as workflow input, so that they can
+ * be synced across to S3 and made avaialble to the container that will run pipeline processing
+ * (to feed configuration into that container).
  * Note: all configuration is received through environment variables.
  */
 fun main() {
+    val logger = KotlinLogging.logger {}
+
     val nestedConfig = Utils.getEnvVar("NESTED_CONFIG", "")
+    logger.info("Saving main configuration to /tmp/config.json: {}", nestedConfig)
     val configFile = File("/tmp", "config.json")
     FileOutputStream(configFile).use {
         it.writer().write(nestedConfig)
     }
+    val runtimeConfig = buildRuntimeConfig()
+    logger.info("Saving runtime configuration to /tmp/runtime.json: {}", runtimeConfig)
     val runtimeFile = File("/tmp", "runtime.json")
     FileOutputStream(runtimeFile).use {
-        it.writer().write(buildRuntimeConfig())
+        it.writer().write(runtimeConfig)
     }
 }
 
