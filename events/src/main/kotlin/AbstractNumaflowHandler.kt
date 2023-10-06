@@ -33,9 +33,9 @@ abstract class AbstractNumaflowHandler(private val handler: AtlanEventHandler) :
         val mapper = jacksonObjectMapper()
     }
 
-    init {
-        Utils.setClient()
-    }
+    // Note: we don't set the client or workflow options here, those will be set through the
+    // S3ConfigSync, since they depend on a configuration being injected by the UI (workflow)
+    // that should be there in tandem with every pipeline
 
     /**
      * Handle the Atlan event using the standard 5-step flow:

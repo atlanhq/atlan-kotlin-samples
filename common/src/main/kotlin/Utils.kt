@@ -23,11 +23,13 @@ object Utils {
      * Set up the default Atlan client, based on environment variables.
      * This will use an API token if found in ATLAN_API_KEY, and will fallback to attempting
      * to impersonate a user if ATLAN_API_KEY is empty.
+     *
+     * @param impersonateUserId unique identifier (GUID) of a user or API token to impersonate
      */
-    fun setClient() {
+    fun setClient(impersonateUserId: String = "") {
         val baseUrl = getEnvVar("ATLAN_BASE_URL", "INTERNAL")
         val apiToken = getEnvVar("ATLAN_API_KEY", "")
-        val userId = getEnvVar("ATLAN_USER_ID", "")
+        val userId = getEnvVar("ATLAN_USER_ID", impersonateUserId)
         Atlan.setBaseUrl(baseUrl)
         val tokenToUse = when {
             apiToken.isNotEmpty() -> {
@@ -92,15 +94,17 @@ object Utils {
     /**
      * Check if the utility is being run through a workflow, and if it is set up the various
      * workflow headers from the relevant environment variables against the default client.
+     *
+     * @param options parameters received through means other than environment variables to use as a fallback
      */
-    fun setWorkflowOpts() {
-        val atlanAgent = getEnvVar("X_ATLAN_AGENT", "")
+    fun setWorkflowOpts(options: Map<String, String> = mapOf()) {
+        val atlanAgent = getEnvVar("X_ATLAN_AGENT", options["x-atlan-agent"] ?: "")
         if (atlanAgent == "workflow") {
             val headers = Atlan.getDefaultClient().extraHeaders
             headers["x-atlan-agent"] = listOf("workflow")
-            headers["x-atlan-agent-package-name"] = listOf(getEnvVar("X_ATLAN_AGENT_PACKAGE_NAME", ""))
-            headers["x-atlan-agent-workflow-id"] = listOf(getEnvVar("X_ATLAN_AGENT_WORKFLOW_ID", ""))
-            headers["x-atlan-agent-id"] = listOf(getEnvVar("X_ATLAN_AGENT_ID", ""))
+            headers["x-atlan-agent-package-name"] = listOf(getEnvVar("X_ATLAN_AGENT_PACKAGE_NAME", options["x-atlan-agent-package-name"] ?: ""))
+            headers["x-atlan-agent-workflow-id"] = listOf(getEnvVar("X_ATLAN_AGENT_WORKFLOW_ID", options["x-atlan-agent-workflow-id"] ?: ""))
+            headers["x-atlan-agent-id"] = listOf(getEnvVar("X_ATLAN_AGENT_ID", options["x-atlan-agent-id"] ?: ""))
             Atlan.getDefaultClient().extraHeaders = headers
         }
     }
