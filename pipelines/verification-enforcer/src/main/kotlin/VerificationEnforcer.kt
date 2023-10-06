@@ -15,6 +15,7 @@ object VerificationEnforcer : AbstractNumaflowHandler(Handler) {
 
     @JvmStatic
     fun main(args: Array<String>) {
+        S3ConfigSync("/tmp", Utils.getEnvVar("CONFIG_PREFIX", "")).sync()
         FunctionServer().registerMapHandler(VerificationEnforcer).start()
     }
 

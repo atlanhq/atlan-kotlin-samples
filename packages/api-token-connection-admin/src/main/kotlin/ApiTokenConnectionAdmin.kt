@@ -8,7 +8,7 @@ import com.atlan.model.core.AssetMutationResponse
 import mu.KotlinLogging
 import kotlin.system.exitProcess
 
-private val log = KotlinLogging.logger {}
+private val logger = KotlinLogging.logger {}
 
 /**
  * Actually run the logic to add the API token as a connection admin.
@@ -21,7 +21,7 @@ fun main() {
     val apiTokenName = Utils.getEnvVar("API_TOKEN_NAME", "")
 
     if (connectionQN == "" || apiTokenName == "") {
-        log.error("Missing required parameter - you must provide BOTH a connection and the name of an API token.")
+        logger.error("Missing required parameter - you must provide BOTH a connection and the name of an API token.")
         exitProcess(4)
     }
 
@@ -37,10 +37,10 @@ fun main() {
  * @return the pseudo-username of the API token
  */
 fun getIdForToken(apiTokenName: String): String {
-    log.info("Looking up API token: {}", apiTokenName)
+    logger.info("Looking up API token: {}", apiTokenName)
     val token = Atlan.getDefaultClient().apiTokens.get(apiTokenName)
     if (token == null) {
-        log.error("Unable to find any API token with the name: {}", apiTokenName)
+        logger.error("Unable to find any API token with the name: {}", apiTokenName)
         exitProcess(5)
     }
     return "service-account-${token.clientId}"
@@ -53,14 +53,14 @@ fun getIdForToken(apiTokenName: String): String {
  * @return the connection with its existing admins
  */
 fun getConnectionWithAdmins(connectionQN: String): Asset {
-    log.info("Looking up connection details: {}", connectionQN)
+    logger.info("Looking up connection details: {}", connectionQN)
     val found = Connection.select()
         .where(Connection.QUALIFIED_NAME.eq(connectionQN))
         .includeOnResults(Connection.ADMIN_USERS)
         .stream()
         .findFirst()
     if (found.isEmpty) {
-        log.error("Unable to find the specified connection: {}", connectionQN)
+        logger.error("Unable to find the specified connection: {}", connectionQN)
         exitProcess(6)
     }
     return found.get()
@@ -74,7 +74,7 @@ fun getConnectionWithAdmins(connectionQN: String): Asset {
  * @param apiToken the API token to append as a connection admin
  */
 fun addTokenAsConnectionAdmin(connection: Asset, apiToken: String) {
-    log.info("Adding API token {} as connection admin for: {}", apiToken, connection.qualifiedName)
+    logger.info("Adding API token {} as connection admin for: {}", apiToken, connection.qualifiedName)
     val existingAdmins = connection.adminUsers
     try {
         val response = connection.trimToRequired()
@@ -83,15 +83,15 @@ fun addTokenAsConnectionAdmin(connection: Asset, apiToken: String) {
             .build()
             .save()
         when (val result = response?.getMutation(connection)) {
-            AssetMutationResponse.MutationType.UPDATED -> log.info(" ... successfully updated the connection with API token as a new admin.")
-            AssetMutationResponse.MutationType.NOOP -> log.info(" ... API token is already an admin on the connection - no changes made.")
-            AssetMutationResponse.MutationType.CREATED -> log.error(" ... somehow created the connection - that should not have happened.")
-            AssetMutationResponse.MutationType.DELETED -> log.error(" ... somehow deleted the connection - that should not have happened.")
+            AssetMutationResponse.MutationType.UPDATED -> logger.info(" ... successfully updated the connection with API token as a new admin.")
+            AssetMutationResponse.MutationType.NOOP -> logger.info(" ... API token is already an admin on the connection - no changes made.")
+            AssetMutationResponse.MutationType.CREATED -> logger.error(" ... somehow created the connection - that should not have happened.")
+            AssetMutationResponse.MutationType.DELETED -> logger.error(" ... somehow deleted the connection - that should not have happened.")
             else -> {
-                log.warn("Unexpected connection change result: {}", result)
+                logger.warn("Unexpected connection change result: {}", result)
             }
         }
     } catch (e: AtlanException) {
-        log.error("Unable to add the API token as a connection admin.", e)
+        logger.error("Unable to add the API token as a connection admin.", e)
     }
 }

@@ -17,7 +17,7 @@ import mu.KotlinLogging
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 
-private val log = KotlinLogging.logger {}
+private val logger = KotlinLogging.logger {}
 
 private const val GLOSSARY_NAME = "Duplicate assets"
 
@@ -44,7 +44,7 @@ fun main(args: Array<String>) {
         batchSize = Utils.getEnvVar("BATCH_SIZE", "50").toInt()
     }
 
-    log.info("Detecting duplicates across {} (for prefix {}) on: {}", types, qnPrefix, Atlan.getDefaultClient().baseUrl)
+    logger.info("Detecting duplicates across {} (for prefix {}) on: {}", types, qnPrefix, Atlan.getDefaultClient().baseUrl)
     findAssets(qnPrefix, types, batchSize)
 
     val glossaryQN = glossaryForDuplicates()
@@ -67,7 +67,7 @@ fun findAssets(qnPrefix: String, types: Collection<String>, batchSize: Int) {
         .includeOnRelations(Column.NAME)
     val totalAssetCount = request.count()
     val count = AtomicLong(0)
-    log.info("Comparing a total of {} assets...", totalAssetCount)
+    logger.info("Comparing a total of {} assets...", totalAssetCount)
     request.stream(true)
         .forEach { asset ->
             val columns = when (asset) {
@@ -90,7 +90,7 @@ fun findAssets(qnPrefix: String, types: Collection<String>, batchSize: Int) {
                 }
                 hashToAssetKeys[hash]?.add(containerKey)
             }
-            Utils.logProgress(count, totalAssetCount, log, batchSize)
+            Utils.logProgress(count, totalAssetCount, logger, batchSize)
         }
 }
 
@@ -106,7 +106,7 @@ fun glossaryForDuplicates(): String {
         val glossary = Glossary.creator(GLOSSARY_NAME)
             .description("Glossary whose terms represent potential duplicate assets.")
             .build()
-        log.info("Creating glossary to hold duplicates.")
+        logger.info("Creating glossary to hold duplicates.")
         glossary.save().getResult(glossary).qualifiedName
     }
 }
@@ -125,7 +125,7 @@ fun termsForDuplicates(glossaryQN: String, batchSize: Int) {
         .stream()
         .filter { hashToAssetKeys[it]?.size!! > 1 }
         .count()
-    log.info("Processing {} total sets of duplicates...", totalSets)
+    logger.info("Processing {} total sets of duplicates...", totalSets)
     hashToAssetKeys.keys.forEach { hash ->
         val keys = hashToAssetKeys[hash]
         if (keys?.size!! > 1) {
@@ -161,10 +161,10 @@ fun termsForDuplicates(glossaryQN: String, batchSize: Int) {
                     )
                 }
             batch.flush()
-            Utils.logProgress(termCount, totalSets, log)
+            Utils.logProgress(termCount, totalSets, logger)
         }
     }
-    log.info("Detected a total of $assetCount assets that could be de-duplicated across $totalSets unique sets of duplicates.")
+    logger.info("Detected a total of $assetCount assets that could be de-duplicated across $totalSets unique sets of duplicates.")
 }
 
 /**

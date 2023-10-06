@@ -14,14 +14,14 @@ import mu.KotlinLogging
 import java.io.IOException
 import java.nio.charset.StandardCharsets
 
-private val log = KotlinLogging.logger {}
-
 /**
  * Base class for event handlers.
  *
  * @param handler the handler that defines actual processing logic
  */
 abstract class AbstractNumaflowHandler(private val handler: AtlanEventHandler) : MapHandler() {
+
+    private val logger = KotlinLogging.logger {}
 
     companion object {
         const val FAILURE = "failure"
@@ -52,28 +52,28 @@ abstract class AbstractNumaflowHandler(private val handler: AtlanEventHandler) :
      */
     protected fun processEvent(event: AtlanEvent, keys: Array<String>, data: Datum): MessageList {
         try {
-            if (!handler.validatePrerequisites(event, log)) {
+            if (!handler.validatePrerequisites(event, logger)) {
                 return failed(keys, data)
             }
         } catch (e: AtlanException) {
-            log.error("Unable to validate prerequisites, failing.", e)
+            logger.error("Unable to validate prerequisites, failing.", e)
             return failed(keys, data)
         }
         return try {
             val current = handler.getCurrentState(
                 Atlan.getDefaultClient(),
                 event.payload.asset,
-                log,
+                logger,
             )
-            val updated = handler.calculateChanges(current, log)
+            val updated = handler.calculateChanges(current, logger)
             if (!updated.isEmpty()) {
-                handler.saveChanges(Atlan.getDefaultClient(), updated, log)
+                handler.saveChanges(Atlan.getDefaultClient(), updated, logger)
                 succeeded(keys, data)
             } else {
                 drop()
             }
         } catch (e: AtlanException) {
-            log.error(
+            logger.error(
                 "Unable to update Atlan asset: {}",
                 event.payload.asset.qualifiedName,
                 e,
@@ -87,7 +87,7 @@ abstract class AbstractNumaflowHandler(private val handler: AtlanEventHandler) :
         return try {
             processEvent(getAtlanEvent(data), keys, data)
         } catch (e: IOException) {
-            log.error("Unable to deserialize event: {}", String(data.value, StandardCharsets.UTF_8), e)
+            logger.error("Unable to deserialize event: {}", String(data.value, StandardCharsets.UTF_8), e)
             failed(keys, data.value)
         }
     }
@@ -133,7 +133,7 @@ abstract class AbstractNumaflowHandler(private val handler: AtlanEventHandler) :
             FAILURE -> map[RETRY_COUNT] = 1
             RETRY -> map[RETRY_COUNT] = (map[RETRY_COUNT] as Int) + 1
         }
-        log.info("Routing to: {} (retry #{})", tag, map[RETRY_COUNT])
+        logger.info("Routing to: {} (retry #{})", tag, map[RETRY_COUNT])
         return MessageList.newBuilder()
             .addMessage(Message(mapper.writeValueAsBytes(map), keys, arrayOf(tag)))
             .build()
@@ -158,7 +158,7 @@ abstract class AbstractNumaflowHandler(private val handler: AtlanEventHandler) :
      * @return a message list indicating the message was successfully processed
      */
     protected fun succeeded(keys: Array<String>, data: ByteArray): MessageList {
-        log.info("Routing to: {}", SUCCESS)
+        logger.info("Routing to: {}", SUCCESS)
         return MessageList.newBuilder()
             .addMessage(Message(data, keys, arrayOf(SUCCESS)))
             .build()

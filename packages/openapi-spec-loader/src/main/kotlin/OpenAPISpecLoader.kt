@@ -14,7 +14,7 @@ import mu.KotlinLogging
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.system.exitProcess
 
-private val log = KotlinLogging.logger {}
+private val logger = KotlinLogging.logger {}
 
 /**
  * Actually run the loader, taking all settings from environment variables.
@@ -29,11 +29,11 @@ fun main() {
     val connectionQN = Utils.createOrReuseConnection("CONNECTION_USAGE", "CONNECTION_QUALIFIED_NAME", "CONNECTION")
 
     if (connectionQN == "" || specUrl == "") {
-        log.error("Missing required parameter - you must provide BOTH a connection name and specification URL.")
+        logger.error("Missing required parameter - you must provide BOTH a connection name and specification URL.")
         exitProcess(4)
     }
 
-    log.info("Loading OpenAPI specification from {} into: {}", specUrl, connectionQN)
+    logger.info("Loading OpenAPI specification from {} into: {}", specUrl, connectionQN)
 
     val parser = OpenAPISpecReader(specUrl)
     loadOpenAPISpec(connectionQN, parser, batchSize)
@@ -62,23 +62,23 @@ fun loadOpenAPISpec(connectionQN: String, spec: OpenAPISpecReader, batchSize: In
         .apiExternalDoc("description", spec.externalDocsDescription)
         .build()
     val specQN = toCreate.qualifiedName
-    log.info("Saving APISpec: {}", specQN)
+    logger.info("Saving APISpec: {}", specQN)
     try {
         val response = toCreate.save()
         val mutation = response.getMutation(toCreate)
         if (mutation in listOf(AssetMutationResponse.MutationType.NOOP, AssetMutationResponse.MutationType.UNKNOWN)) {
-            log.info(" ... reusing existing APISpec: {}", toCreate.qualifiedName)
+            logger.info(" ... reusing existing APISpec: {}", toCreate.qualifiedName)
         } else {
-            log.info(" ... {} APISpec: {}", mutation.name, toCreate.qualifiedName)
+            logger.info(" ... {} APISpec: {}", mutation.name, toCreate.qualifiedName)
         }
     } catch (e: AtlanException) {
-        log.error("Unable to save the APISpec.", e)
+        logger.error("Unable to save the APISpec.", e)
         exitProcess(5)
     }
     val batch = AssetBatch(Atlan.getDefaultClient(), APIPath.TYPE_NAME, batchSize, false, AssetBatch.CustomMetadataHandling.MERGE, true)
     val totalCount = spec.paths?.size!!.toLong()
     if (totalCount > 0) {
-        log.info("Creating an APIPath for each path defined within the spec (total: {})", totalCount)
+        logger.info("Creating an APIPath for each path defined within the spec (total: {})", totalCount)
         try {
             val assetCount = AtomicLong(0)
             for (apiPath in spec.paths.entries) {
@@ -100,12 +100,12 @@ fun loadOpenAPISpec(connectionQN: String, spec: OpenAPISpecReader, batchSize: In
                     .apiPathIsTemplated(pathUrl.contains("{") && pathUrl.contains("}"))
                     .build()
                 batch.add(path)
-                Utils.logProgress(assetCount, totalCount, log, batchSize)
+                Utils.logProgress(assetCount, totalCount, logger, batchSize)
             }
             batch.flush()
-            Utils.logProgress(assetCount, totalCount, log, batchSize)
+            Utils.logProgress(assetCount, totalCount, logger, batchSize)
         } catch (e: AtlanException) {
-            log.error("Unable to bulk-save API paths.", e)
+            logger.error("Unable to bulk-save API paths.", e)
         }
     }
 }
