@@ -2,7 +2,6 @@
 /* Copyright 2023 Atlan Pte. Ltd. */
 import mu.KotlinLogging
 import java.io.File
-import java.io.FileOutputStream
 
 /**
  * Utility to write out configuration files received as workflow input, so that they can
@@ -15,16 +14,11 @@ fun main() {
 
     val nestedConfig = Utils.getEnvVar("NESTED_CONFIG", "")
     logger.info("Saving main configuration to /tmp/config.json: {}", nestedConfig)
-    val configFile = File("/tmp", "config.json")
-    FileOutputStream(configFile).use {
-        it.writer().write(nestedConfig)
-    }
+    File("/tmp", "config.json").writeText(nestedConfig)
+
     val runtimeConfig = buildRuntimeConfig()
     logger.info("Saving runtime configuration to /tmp/runtime.json: {}", runtimeConfig)
-    val runtimeFile = File("/tmp", "runtime.json")
-    FileOutputStream(runtimeFile).use {
-        it.writer().write(runtimeConfig)
-    }
+    File("/tmp", "runtime.json").writeText(runtimeConfig)
 }
 
 /**
