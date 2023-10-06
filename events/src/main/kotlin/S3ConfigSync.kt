@@ -79,19 +79,25 @@ class S3ConfigSync(private val localPath: String, private val configPrefix: Stri
             Runtime.parse()
         }
 
+        // TODO: return the requested configuration instance (or null if no config), rather than a simple boolean
         return anySynced
     }
 
+    // TODO: have this receive an object type, and parse the config into an instance of that object
+    //  and return it, so the configuration itself is strongly typed
     private object Config {
-        fun parse() {
-            val config = MAPPER.readValue<MutableMap<String, Any>>(File(CONFIG_FILE).readText())
-            Utils.setClient(config["api_token"].toString())
+        fun parse(): Map<String, Any> {
+            return MAPPER.readValue<Map<String, Any>>(File(CONFIG_FILE).readText())
         }
     }
 
+    // All runtime configuration comes through these settings:
+    // - will impersonate all pipeline activity as the user who configured the workflow
+    // - will set update details (in audit log) based on details of the workflow
     private object Runtime {
         fun parse() {
             val config = MAPPER.readValue<MutableMap<String, String>>(File(RUNTIME_FILE).readText())
+            Utils.setClient(config["user-id"] ?: "")
             Utils.setWorkflowOpts(config)
         }
     }
