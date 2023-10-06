@@ -9,13 +9,23 @@ import com.atlan.model.assets.Asset
 import com.atlan.model.assets.ICatalog
 import com.atlan.model.enums.CertificateStatus
 import io.numaproj.numaflow.function.FunctionServer
+import mu.KotlinLogging
 import org.slf4j.Logger
 
 object VerificationEnforcer : AbstractNumaflowHandler(Handler) {
 
     @JvmStatic
     fun main(args: Array<String>) {
-        S3ConfigSync("/tmp", Utils.getEnvVar("CONFIG_PREFIX", "")).sync()
+        val logger = KotlinLogging.logger {}
+        logger.info("Looking for configuration in S3...")
+        val config = S3ConfigSync("/tmp", Utils.getEnvVar("CONFIG_PREFIX", ""))
+        if (!config.sync()) {
+            logger.info("... no configuration found, waiting ...")
+        }
+        do {
+            Thread.sleep(60000)
+        } while (!config.sync())
+        logger.info("Configuration found - synced to: /tmp/config.json")
         FunctionServer().registerMapHandler(VerificationEnforcer).start()
     }
 
