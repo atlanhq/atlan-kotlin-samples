@@ -97,7 +97,7 @@ class S3ConfigSync(private val localPath: String, private val configPrefix: Stri
     private object Runtime {
         fun parse() {
             val config = MAPPER.readValue<MutableMap<String, String>>(File(RUNTIME_FILE).readText())
-            Utils.setClient(config["user_id"] ?: "")
+            Utils.setClient(config["user-id"] ?: "")
             Utils.setWorkflowOpts(config)
         }
     }
