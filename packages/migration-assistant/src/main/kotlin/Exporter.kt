@@ -16,7 +16,7 @@ import java.io.File
 import java.util.stream.Collectors
 import java.util.stream.Stream
 
-private val log = KotlinLogging.logger {}
+private val logger = KotlinLogging.logger {}
 
 /**
  * Actually run the export, taking all settings from environment variables.
@@ -63,8 +63,8 @@ class Exporter(private val config: Map<String, String>) : RowGenerator {
             )
             csv.writeHeader(headerNames)
             val start = System.currentTimeMillis()
-            csv.streamAssets(assets.stream(true), this, assets.count(), batchSize, log)
-            log.info("Total time taken: {} ms", System.currentTimeMillis() - start)
+            csv.streamAssets(assets.stream(true), this, assets.count(), batchSize, logger)
+            logger.info("Total time taken: {} ms", System.currentTimeMillis() - start)
         }
     }
 

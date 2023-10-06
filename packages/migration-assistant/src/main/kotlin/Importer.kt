@@ -12,7 +12,7 @@ import mu.KotlinLogging
 import xformers.cell.AssetRefXformer
 import java.lang.reflect.InvocationTargetException
 
-private val log = KotlinLogging.logger {}
+private val logger = KotlinLogging.logger {}
 
 /**
  * Actually run the importer.
@@ -45,8 +45,8 @@ class Importer(private val config: Map<String, String>) : AssetGenerator {
     fun import() {
         CSVReader(filename).use { csv ->
             val start = System.currentTimeMillis()
-            csv.streamRows(this, batchSize, log)
-            log.info("Total time taken: {} ms", System.currentTimeMillis() - start)
+            csv.streamRows(this, batchSize, logger)
+            logger.info("Total time taken: {} ms", System.currentTimeMillis() - start)
         }
     }
 
@@ -69,7 +69,7 @@ class Importer(private val config: Map<String, String>) : AssetGenerator {
             attrNames.add(Asset.ANNOUNCEMENT_TITLE.atlanFieldName)
             attrNames.add(Asset.ANNOUNCEMENT_MESSAGE.atlanFieldName)
         }
-        log.info("Adding attributes to be cleared, if blank: {}", attrNames)
+        logger.info("Adding attributes to be cleared, if blank: {}", attrNames)
         val attrFields = mutableListOf<AtlanField>()
         for (name in attrNames) {
             attrFields.add(SearchableField(name, name))
@@ -141,14 +141,14 @@ class Importer(private val config: Map<String, String>) : AssetGenerator {
                 return true
             }
         } catch (e: ClassNotFoundException) {
-            log.error(
+            logger.error(
                 "Unknown type {} — cannot clear {}.",
                 candidate.typeName,
                 field.atlanFieldName,
                 e,
             )
         } catch (e: IllegalAccessException) {
-            log.error(
+            logger.error(
                 "Unable to clear {} on: {}::{}",
                 field.atlanFieldName,
                 candidate.typeName,
@@ -156,7 +156,7 @@ class Importer(private val config: Map<String, String>) : AssetGenerator {
                 e,
             )
         } catch (e: InvocationTargetException) {
-            log.error(
+            logger.error(
                 "Unable to clear {} on: {}::{}",
                 field.atlanFieldName,
                 candidate.typeName,

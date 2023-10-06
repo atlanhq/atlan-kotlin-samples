@@ -12,12 +12,12 @@ import java.util.concurrent.atomic.AtomicLong
 import kotlin.math.round
 import kotlin.system.exitProcess
 
-private val log = KotlinLogging.logger {}
-
 /**
  * Common utilities for using the Atlan SDK within Kotlin.
  */
 object Utils {
+
+    private val logger = KotlinLogging.logger {}
 
     /**
      * Set up the default Atlan client, based on environment variables.
@@ -31,15 +31,15 @@ object Utils {
         Atlan.setBaseUrl(baseUrl)
         val tokenToUse = when {
             apiToken.isNotEmpty() -> {
-                log.info("Using provided API token for authentication.")
+                logger.info("Using provided API token for authentication.")
                 apiToken
             }
             userId.isNotEmpty() -> {
-                log.info("No API token found, attempting to impersonate user: {}", userId)
+                logger.info("No API token found, attempting to impersonate user: {}", userId)
                 Atlan.getDefaultClient().impersonate.user(userId)
             }
             else -> {
-                log.info("No API token or impersonation user, attempting short-lived escalation.")
+                logger.info("No API token or impersonation user, attempting short-lived escalation.")
                 Atlan.getDefaultClient().impersonate.escalate()
             }
         }
@@ -154,7 +154,7 @@ object Utils {
     fun createConnection(varWithConnectionString: String): String {
         val connectionString = getEnvVar(varWithConnectionString, "")
         return if (connectionString != "") {
-            log.info("Attempting to create new connection...")
+            logger.info("Attempting to create new connection...")
             try {
                 val toCreate = Atlan.getDefaultClient().readValue(connectionString, Connection::class.java)
                     .toBuilder()
@@ -163,13 +163,13 @@ object Utils {
                 val response = toCreate.save().block()
                 response.getResult(toCreate).qualifiedName
             } catch (e: IOException) {
-                log.error("Unable to deserialize the connection details: {}", connectionString, e)
+                logger.error("Unable to deserialize the connection details: {}", connectionString, e)
                 exitProcess(2)
             } catch (e: IllegalArgumentException) {
-                log.error("Unable to deserialize the connection details: {}", connectionString, e)
+                logger.error("Unable to deserialize the connection details: {}", connectionString, e)
                 exitProcess(2)
             } catch (e: AtlanException) {
-                log.error("Unable to create connection: {}", connectionString, e)
+                logger.error("Unable to create connection: {}", connectionString, e)
                 exitProcess(3)
             }
         } else {
@@ -186,11 +186,11 @@ object Utils {
     fun reuseConnection(varWithConnectionQN: String): String {
         val providedConnectionQN = getEnvVar(varWithConnectionQN, "")
         return try {
-            log.info("Attempting to reuse connection: {}", providedConnectionQN)
+            logger.info("Attempting to reuse connection: {}", providedConnectionQN)
             Connection.get(Atlan.getDefaultClient(), providedConnectionQN, false)
             providedConnectionQN
         } catch (e: NotFoundException) {
-            log.error("Unable to find connection with the provided qualifiedName: {}", providedConnectionQN, e)
+            logger.error("Unable to find connection with the provided qualifiedName: {}", providedConnectionQN, e)
             ""
         }
     }
