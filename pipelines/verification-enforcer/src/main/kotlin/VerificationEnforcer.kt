@@ -78,23 +78,42 @@ object VerificationEnforcer : AbstractNumaflowHandler(Handler) {
 
         /** {@inheritDoc}  */
         @Throws(AtlanException::class)
-        override fun getCurrentState(client: AtlanClient, fromEvent: Asset, logger: Logger): Asset {
+        override fun getCurrentState(client: AtlanClient, fromEvent: Asset, logger: Logger): Asset? {
             setup()
             val includeTerms = MUST_HAVES.contains("term")
             val includeTags = MUST_HAVES.contains("tag")
-            return AtlanEventHandler.getCurrentViewOfAsset(client, fromEvent, REQUIRED_ATTRS, includeTerms, includeTags)
-                ?: throw NotFoundException(
-                    ErrorCode.ASSET_NOT_FOUND_BY_QN, fromEvent.qualifiedName, fromEvent.typeName,
+            return if (fromEvent.typeName in ASSET_TYPES) {
+                AtlanEventHandler.getCurrentViewOfAsset(
+                    client,
+                    fromEvent,
+                    REQUIRED_ATTRS,
+                    includeTerms,
+                    includeTags,
                 )
+                    ?: throw NotFoundException(
+                        ErrorCode.ASSET_NOT_FOUND_BY_QN, fromEvent.qualifiedName, fromEvent.typeName,
+                    )
+            } else {
+                logger.info(
+                    "Skipped checking asset of {}, not configured to check these assets: {}",
+                    fromEvent.typeName,
+                    fromEvent.qualifiedName,
+                )
+                null
+            }
         }
 
         /** {@inheritDoc}  */
         @Throws(AtlanException::class)
-        override fun calculateChanges(asset: Asset, logger: Logger): Collection<Asset> {
+        override fun calculateChanges(asset: Asset?, logger: Logger): Collection<Asset> {
             // We only need to consider enforcement if the asset is currently verified
-            if (asset.certificateStatus == CertificateStatus.VERIFIED) {
-                if (asset.typeName in ASSET_TYPES) {
+            if (asset != null) {
+                if (asset.certificateStatus == CertificateStatus.VERIFIED) {
                     if (!valid(asset)) {
+                        logger.info(
+                            "Asset missing some required information to be verified, reverting to DRAFT: {}",
+                            asset.qualifiedName,
+                        )
                         return setOf(
                             asset.trimToRequired()
                                 .certificateStatus(CertificateStatus.DRAFT)
@@ -108,10 +127,11 @@ object VerificationEnforcer : AbstractNumaflowHandler(Handler) {
                         )
                     }
                 } else {
-                    logger.info("Skipped checking asset of type {}, not configured to check these assets.", asset.typeName)
+                    logger.info(
+                        "Asset is no longer verified, no enforcement action to consider: {}",
+                        asset.qualifiedName,
+                    )
                 }
-            } else {
-                logger.info("Asset is no longer verified, no enforcement action to consider: {}", asset.qualifiedName)
             }
             return emptySet()
         }
