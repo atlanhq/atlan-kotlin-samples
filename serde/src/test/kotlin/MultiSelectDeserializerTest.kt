@@ -14,7 +14,7 @@ class MultiSelectDeserializerTest {
 
     @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
     data class TestClass(
-        @JsonDeserialize(using = MultiSelectDeserializer::class) val property: List<String>?
+        @JsonDeserialize(using = MultiSelectDeserializer::class) val property: List<String>?,
     )
 
     companion object {
