@@ -80,7 +80,6 @@ class S3ConfigSync {
         if (anySynced) {
             config = parseConfig()
             config.runtime = MAPPER.readValue(File(RUNTIME_FILE).readText(), RuntimeConfig::class.java)
-            Utils.setWorkflowOpts(config.runtime)
         } else {
             config = null
         }
