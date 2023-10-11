@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright 2023 Atlan Pte. Ltd.
-FROM ghcr.io/atlanhq/atlan-java:1.4.0
+FROM ghcr.io/atlanhq/atlan-java@sha256:0a3653bb7c3cd7e499e555de7b70fe152ec99bda8f7ef9865781fb4d1c1beff2
 
 LABEL org.opencontainers.image.vendor="Atlan Pte. Ltd." \
       org.opencontainers.image.source="https://github.com/atlanhq/atlan-kotlin-samples" \

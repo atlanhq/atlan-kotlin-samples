@@ -1,7 +1,9 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 /* Copyright 2023 Atlan Pte. Ltd. */
+package config
+
+import Utils
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import config.RuntimeConfig
 import mu.KotlinLogging
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.S3Client
