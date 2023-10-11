@@ -14,7 +14,8 @@ import config.EventConfig
 import org.slf4j.Logger
 
 /**
- *
+ * Ensures any asset marked VERIFIED meets a minimum standard,
+ * or if not it is automatically reverted to DRAFT.
  */
 object VerificationEnforcer : AbstractNumaflowHandler(Handler) {
 
@@ -60,15 +61,22 @@ object VerificationEnforcer : AbstractNumaflowHandler(Handler) {
             ICatalog.OUTPUT_FROM_PROCESSES.atlanFieldName,
         )
 
-        private val MUST_HAVES = config.mustHaves ?: listOf()
-        private val ASSET_TYPES = config.assetTypes ?: listOf()
-        private val ENFORCEMENT_MESSAGE = config.enforcementMessage ?: "To be verified, an asset must have a description, at least one owner, and lineage."
+        private lateinit var MUST_HAVES: List<String>
+        private lateinit var ASSET_TYPES: List<String>
+        private lateinit var ENFORCEMENT_MESSAGE: String
+
+        private fun setup() {
+            MUST_HAVES = config.mustHaves ?: listOf()
+            ASSET_TYPES = config.assetTypes ?: listOf()
+            ENFORCEMENT_MESSAGE = config.enforcementMessage ?: "To be verified, an asset must have a description, at least one owner, and lineage."
+        }
 
         // Note: we can just re-use the default validatePrerequisites
 
         /** {@inheritDoc}  */
         @Throws(AtlanException::class)
-        override fun getCurrentState(client: AtlanClient, fromEvent: Asset, log: Logger): Asset {
+        override fun getCurrentState(client: AtlanClient, fromEvent: Asset, logger: Logger): Asset {
+            setup()
             val includeTerms = MUST_HAVES.contains("term")
             val includeTags = MUST_HAVES.contains("tag")
             return AtlanEventHandler.getCurrentViewOfAsset(client, fromEvent, REQUIRED_ATTRS, includeTerms, includeTags)
@@ -79,28 +87,28 @@ object VerificationEnforcer : AbstractNumaflowHandler(Handler) {
 
         /** {@inheritDoc}  */
         @Throws(AtlanException::class)
-        override fun calculateChanges(asset: Asset, log: Logger): Collection<Asset> {
+        override fun calculateChanges(asset: Asset, logger: Logger): Collection<Asset> {
             // We only need to consider enforcement if the asset is currently verified
-            if (asset.certificateStatus == CertificateStatus.VERIFIED && asset.typeName in ASSET_TYPES) {
-                if (!AtlanEventHandler.hasDescription(asset) ||
-                    !AtlanEventHandler.hasOwner(asset) || !asset.typeName.startsWith("AtlasGlossary") && !AtlanEventHandler.hasLineage(
-                        asset,
-                    )
-                ) {
-                    return setOf(
-                        asset.trimToRequired()
-                            .certificateStatus(CertificateStatus.DRAFT)
-                            .certificateStatusMessage(ENFORCEMENT_MESSAGE)
-                            .build(),
-                    )
+            if (asset.certificateStatus == CertificateStatus.VERIFIED) {
+                if (asset.typeName in ASSET_TYPES) {
+                    if (!valid(asset)) {
+                        return setOf(
+                            asset.trimToRequired()
+                                .certificateStatus(CertificateStatus.DRAFT)
+                                .certificateStatusMessage(ENFORCEMENT_MESSAGE)
+                                .build(),
+                        )
+                    } else {
+                        logger.info(
+                            "Asset has all required information present to be verified, no enforcement required: {}",
+                            asset.qualifiedName,
+                        )
+                    }
                 } else {
-                    log.info(
-                        "Asset has all required information present to be verified, no enforcement required: {}",
-                        asset.qualifiedName,
-                    )
+                    logger.info("Skipped checking asset of type {}, not configured to check these assets.", asset.typeName)
                 }
             } else {
-                log.info("Asset is no longer verified, no enforcement action to consider: {}", asset.qualifiedName)
+                logger.info("Asset is no longer verified, no enforcement action to consider: {}", asset.qualifiedName)
             }
             return emptySet()
         }
