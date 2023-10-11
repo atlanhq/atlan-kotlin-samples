@@ -27,6 +27,7 @@ object VerificationEnforcer : AbstractNumaflowHandler(Handler) {
             logger.info("Configuration found - synced to: /tmp/config.json")
             // TODO: use API token if it's been specified
             Utils.setClient(config.runtime.userId ?: "")
+            Utils.setWorkflowOpts(config.runtime)
             FunctionServer().registerMapHandler(VerificationEnforcer).start()
         }
     }
