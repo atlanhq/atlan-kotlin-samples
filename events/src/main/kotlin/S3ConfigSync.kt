@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 /* Copyright 2023 Atlan Pte. Ltd. */
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
+import config.RuntimeConfig
 import mu.KotlinLogging
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.S3Client
@@ -16,12 +16,14 @@ import java.io.File
  * 1. config.json -- containing at least an "api_token" key, giving the GUID of the API token for the pipeline to execute through
  * 2. runtime.json -- containing the details of the workflow (X_ATLAN_AGENT_* headers), for injection into audit logs
  */
-class S3ConfigSync(private val localPath: String, private val configPrefix: String) {
+class S3ConfigSync {
 
-    private val logger = KotlinLogging.logger {}
+    val logger = KotlinLogging.logger {}
 
-    private val bucketName = Utils.getEnvVar("AWS_S3_BUCKET_NAME", "")
-    private val region = Utils.getEnvVar("AWS_S3_REGION", "ap-south-1")
+    val localPath = "/tmp"
+    val configPrefix = Utils.getEnvVar("CONFIG_PREFIX", "")
+    val bucketName = Utils.getEnvVar("AWS_S3_BUCKET_NAME", "")
+    val region = Utils.getEnvVar("AWS_S3_REGION", "ap-south-1")
 
     companion object {
         const val CONFIG_FILE = "/tmp/config.json"
@@ -32,9 +34,9 @@ class S3ConfigSync(private val localPath: String, private val configPrefix: Stri
     /**
      * Download any configuration files from S3 into the running container.
      *
-     * @return true if any files were synced, otherwise false
+     * @return the synced configuration, if any, otherwise null
      */
-    fun sync(): Boolean {
+    inline fun <reified T : EventConfig> sync(): T? {
         logger.info("Syncing configuration from s3://$bucketName/$configPrefix to $localPath")
 
         val s3Client = S3Client.builder().region(Region.of(region)).build()
@@ -74,31 +76,19 @@ class S3ConfigSync(private val localPath: String, private val configPrefix: Stri
             anySynced = true
         }
 
+        val config: T?
         if (anySynced) {
-            Config.parse()
-            Runtime.parse()
+            config = parseConfig()
+            config.runtime = MAPPER.readValue(File(RUNTIME_FILE).readText(), RuntimeConfig::class.java)
+            Utils.setWorkflowOpts(config.runtime)
+        } else {
+            config = null
         }
-
-        // TODO: return the requested configuration instance (or null if no config), rather than a simple boolean
-        return anySynced
+        return config
     }
 
-    // TODO: have this receive an object type, and parse the config into an instance of that object
-    //  and return it, so the configuration itself is strongly typed
-    private object Config {
-        fun parse(): Map<String, Any> {
-            return MAPPER.readValue<Map<String, Any>>(File(CONFIG_FILE).readText())
-        }
-    }
-
-    // All runtime configuration comes through these settings:
-    // - will impersonate all pipeline activity as the user who configured the workflow
-    // - will set update details (in audit log) based on details of the workflow
-    private object Runtime {
-        fun parse() {
-            val config = MAPPER.readValue<MutableMap<String, String>>(File(RUNTIME_FILE).readText())
-            Utils.setClient(config["user-id"] ?: "")
-            Utils.setWorkflowOpts(config)
-        }
+    inline fun <reified T : EventConfig> parseConfig(): T {
+        val type = MAPPER.typeFactory.constructType(T::class.java)
+        return MAPPER.readValue(File(CONFIG_FILE).readText(), type)
     }
 }
