@@ -9,6 +9,7 @@ import com.atlan.model.assets.Asset
 import com.atlan.model.assets.ICatalog
 import com.atlan.model.enums.CertificateStatus
 import com.fasterxml.jackson.annotation.JsonAutoDetect
+import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonProperty
 import config.EventConfig
 import org.slf4j.Logger
@@ -36,8 +37,10 @@ object VerificationEnforcer : AbstractNumaflowHandler(Handler) {
      */
     @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
     data class Cfg(
+        @JsonFormat(with = [JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY])
         @JsonProperty("must-haves") val mustHaves: List<String>?,
         @JsonProperty("enforcement-message") val enforcementMessage: String?,
+        @JsonFormat(with = [JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY])
         @JsonProperty("asset-types") val assetTypes: List<String>?,
         @JsonProperty("api-token") val apiTokenId: String?,
     ) : EventConfig()
