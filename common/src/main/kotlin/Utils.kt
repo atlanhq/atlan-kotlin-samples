@@ -4,6 +4,7 @@ import com.atlan.Atlan
 import com.atlan.exception.AtlanException
 import com.atlan.exception.NotFoundException
 import com.atlan.model.assets.Connection
+import config.RuntimeConfig
 import mu.KLogger
 import mu.KotlinLogging
 import java.io.IOException
@@ -95,16 +96,16 @@ object Utils {
      * Check if the utility is being run through a workflow, and if it is set up the various
      * workflow headers from the relevant environment variables against the default client.
      *
-     * @param options parameters received through means other than environment variables to use as a fallback
+     * @param config parameters received through means other than environment variables to use as a fallback
      */
-    fun setWorkflowOpts(options: Map<String, String> = mapOf()) {
-        val atlanAgent = getEnvVar("X_ATLAN_AGENT", options["x-atlan-agent"] ?: "")
+    fun setWorkflowOpts(config: RuntimeConfig? = null) {
+        val atlanAgent = getEnvVar("X_ATLAN_AGENT", config?.agent ?: "")
         if (atlanAgent == "workflow") {
             val headers = Atlan.getDefaultClient().extraHeaders
             headers["x-atlan-agent"] = listOf("workflow")
-            headers["x-atlan-agent-package-name"] = listOf(getEnvVar("X_ATLAN_AGENT_PACKAGE_NAME", options["x-atlan-agent-package-name"] ?: ""))
-            headers["x-atlan-agent-workflow-id"] = listOf(getEnvVar("X_ATLAN_AGENT_WORKFLOW_ID", options["x-atlan-agent-workflow-id"] ?: ""))
-            headers["x-atlan-agent-id"] = listOf(getEnvVar("X_ATLAN_AGENT_ID", options["x-atlan-agent-id"] ?: ""))
+            headers["x-atlan-agent-package-name"] = listOf(getEnvVar("X_ATLAN_AGENT_PACKAGE_NAME", config?.agentPackageName ?: ""))
+            headers["x-atlan-agent-workflow-id"] = listOf(getEnvVar("X_ATLAN_AGENT_WORKFLOW_ID", config?.agentWorkflowId ?: ""))
+            headers["x-atlan-agent-id"] = listOf(getEnvVar("X_ATLAN_AGENT_ID", config?.agentId ?: ""))
             Atlan.getDefaultClient().extraHeaders = headers
         }
     }

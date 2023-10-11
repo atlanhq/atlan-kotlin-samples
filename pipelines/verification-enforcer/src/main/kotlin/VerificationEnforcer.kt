@@ -8,6 +8,8 @@ import com.atlan.exception.NotFoundException
 import com.atlan.model.assets.Asset
 import com.atlan.model.assets.ICatalog
 import com.atlan.model.enums.CertificateStatus
+import com.fasterxml.jackson.annotation.JsonAutoDetect
+import com.fasterxml.jackson.annotation.JsonProperty
 import io.numaproj.numaflow.function.FunctionServer
 import mu.KotlinLogging
 import org.slf4j.Logger
@@ -18,14 +20,21 @@ object VerificationEnforcer : AbstractNumaflowHandler(Handler) {
     fun main(args: Array<String>) {
         val logger = KotlinLogging.logger {}
         logger.info("Looking for configuration in S3...")
-        val config = S3ConfigSync("/tmp", Utils.getEnvVar("CONFIG_PREFIX", ""))
-        if (!config.sync()) {
+        val config = S3ConfigSync().sync<VEConfig>()
+        if (config == null) {
             logger.info("... no configuration found, will timeout pod and retry ...")
         } else {
             logger.info("Configuration found - synced to: /tmp/config.json")
+            // TODO: use API token if it's been specified
+            Utils.setClient(config.runtime.userId ?: "")
             FunctionServer().registerMapHandler(VerificationEnforcer).start()
         }
     }
+
+    @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
+    data class VEConfig(
+        @JsonProperty("api_token") val apiTokenId: String?,
+    ) : EventConfig()
 
     object Handler : AtlanEventHandler {
 
