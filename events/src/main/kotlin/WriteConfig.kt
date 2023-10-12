@@ -5,7 +5,7 @@ import java.io.File
 
 /**
  * Utility to write out configuration files received as workflow input, so that they can
- * be synced across to S3 and made avaialble to the container that will run pipeline processing
+ * be synced across to S3 and made available to the container that will run pipeline processing
  * (to feed configuration into that container).
  * Note: all configuration is received through environment variables.
  */
@@ -19,6 +19,8 @@ fun main() {
     val runtimeConfig = buildRuntimeConfig()
     logger.info("Saving runtime configuration to /tmp/runtime.json: {}", runtimeConfig)
     File("/tmp", "runtime.json").writeText(runtimeConfig)
+
+    logger.info("The {} pipeline will now begin running in the background at all times, using this configuration.", Utils.getEnvVar("X_ATLAN_AGENT_PACKAGE_NAME", ""))
 }
 
 /**
