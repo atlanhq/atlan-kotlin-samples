@@ -151,7 +151,7 @@ object VerificationEnforcer : AbstractNumaflowHandler(Handler) {
                 overallValid = overallValid && when (next) {
                     "description" -> AtlanEventHandler.hasDescription(asset)
                     "owner" -> AtlanEventHandler.hasOwner(asset)
-                    // TODO: once available in next SDK release "readme" -> AtlanEventHandler.hasReadme(asset)
+                    "readme" -> AtlanEventHandler.hasReadme(asset)
                     "tag" -> AtlanEventHandler.hasAtlanTags(asset)
                     // Only check these last two on non-glossary asset types
                     "lineage" -> !asset.typeName.startsWith("AtlasGlossary") && AtlanEventHandler.hasLineage(asset)
