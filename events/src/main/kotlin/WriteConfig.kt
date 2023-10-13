@@ -9,31 +9,37 @@ import java.io.File
  * (to feed configuration into that container).
  * Note: all configuration is received through environment variables.
  */
-fun main() {
-    val logger = KotlinLogging.logger {}
+object WriteConfig {
 
-    val nestedConfig = Utils.getEnvVar("NESTED_CONFIG", "")
-    logger.info("Saving main configuration to /tmp/config.json: {}", nestedConfig)
-    File("/tmp", "config.json").writeText(nestedConfig)
+    @JvmStatic
+    fun main(args: Array<String>) {
+        val logger = KotlinLogging.logger {}
 
-    val runtimeConfig = buildRuntimeConfig()
-    logger.info("Saving runtime configuration to /tmp/runtime.json: {}", runtimeConfig)
-    File("/tmp", "runtime.json").writeText(runtimeConfig)
+        val nestedConfig = Utils.getEnvVar("NESTED_CONFIG", "")
+        logger.info("Saving main configuration to /tmp/config.json: {}", nestedConfig)
+        File("/tmp", "config.json").writeText(nestedConfig)
 
-    logger.info("The {} pipeline will now begin running in the background at all times, using this configuration.", Utils.getEnvVar("X_ATLAN_AGENT_PACKAGE_NAME", ""))
-}
+        val runtimeConfig = buildRuntimeConfig()
+        logger.info("Saving runtime configuration to /tmp/runtime.json: {}", runtimeConfig)
+        File("/tmp", "runtime.json").writeText(runtimeConfig)
 
-/**
- * Construct a JSON representation of the runtime configuration of the workflow, drawn from
- * a standard set of environment variables about the workflow.
- */
-fun buildRuntimeConfig(): String {
-    val userId = Utils.getEnvVar("ATLAN_USER_ID", "")
-    val agent = Utils.getEnvVar("X_ATLAN_AGENT", "")
-    val agentId = Utils.getEnvVar("X_ATLAN_AGENT_ID", "")
-    val agentPkg = Utils.getEnvVar("X_ATLAN_AGENT_PACKAGE_NAME", "")
-    val agentWfl = Utils.getEnvVar("X_ATLAN_AGENT_WORKFLOW_ID", "")
-    return """
+        logger.info(
+            "The {} pipeline will now begin running in the background at all times, using this configuration.",
+            Utils.getEnvVar("X_ATLAN_AGENT_PACKAGE_NAME", ""),
+        )
+    }
+
+    /**
+     * Construct a JSON representation of the runtime configuration of the workflow, drawn from
+     * a standard set of environment variables about the workflow.
+     */
+    fun buildRuntimeConfig(): String {
+        val userId = Utils.getEnvVar("ATLAN_USER_ID", "")
+        val agent = Utils.getEnvVar("X_ATLAN_AGENT", "")
+        val agentId = Utils.getEnvVar("X_ATLAN_AGENT_ID", "")
+        val agentPkg = Utils.getEnvVar("X_ATLAN_AGENT_PACKAGE_NAME", "")
+        val agentWfl = Utils.getEnvVar("X_ATLAN_AGENT_WORKFLOW_ID", "")
+        return """
     {
         "user-id": "$userId",
         "x-atlan-agent": "$agent",
@@ -41,5 +47,6 @@ fun buildRuntimeConfig(): String {
         "x-atlan-agent-package-name": "$agentPkg",
         "x-atlan-agent-workflow-id": "$agentWfl"
     }
-    """.trimIndent()
+        """.trimIndent()
+    }
 }

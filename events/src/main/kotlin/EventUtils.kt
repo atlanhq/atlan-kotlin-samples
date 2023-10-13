@@ -1,7 +1,9 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 /* Copyright 2023 Atlan Pte. Ltd. */
 import com.atlan.Atlan
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import config.EventConfig
+import config.RuntimeConfig
 import config.S3ConfigSync
 import io.numaproj.numaflow.function.FunctionServer
 import mu.KotlinLogging
@@ -12,6 +14,7 @@ import mu.KotlinLogging
 object EventUtils {
 
     val logger = KotlinLogging.logger {}
+    val MAPPER = jacksonObjectMapper()
 
     /**
      * Set up the event-processing options, and start up the event processor.
@@ -29,6 +32,21 @@ object EventUtils {
             Utils.setWorkflowOpts(config.runtime)
         }
         return config
+    }
+
+    /**
+     * Parse configuration from the provided input strings.
+     *
+     * @param config the event-processing-specific configuration
+     * @param runtime the general runtime configuration from the workflow
+     * @return the complete configuration for the event-handling pipeline
+     */
+    inline fun <reified T : EventConfig> parseConfig(config: String, runtime: String): T {
+        logger.info("Parsing configuration...")
+        val type = MAPPER.typeFactory.constructType(T::class.java)
+        val cfg = MAPPER.readValue<T>(config, type)
+        cfg.runtime = MAPPER.readValue(runtime, RuntimeConfig::class.java)
+        return cfg
     }
 
     /**
