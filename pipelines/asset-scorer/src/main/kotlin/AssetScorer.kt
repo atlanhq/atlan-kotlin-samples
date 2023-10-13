@@ -114,11 +114,15 @@ object AssetScorer : AbstractNumaflowHandler(Handler) {
                     CertificateStatus.VERIFIED -> 25
                     else -> 0
                 }
-                val sReadme = when (AtlanEventHandler.hasReadme(asset)) {
-                    (asset.readme.description.length > 1000) -> 20
-                    (asset.readme.description.length > 500) -> 10
-                    (asset.readme.description.length > 100) -> 5
-                    else -> 0
+                val sReadme = if (AtlanEventHandler.hasReadme(asset)) {
+                    when {
+                        (asset.readme.description.length > 1000) -> 20
+                        (asset.readme.description.length > 500) -> 10
+                        (asset.readme.description.length > 100) -> 5
+                        else -> 0
+                    }
+                } else {
+                    0
                 }
                 (sDescription + sRelatedTerm + sLinks + sRelatedAsset + sCertificate + sReadme).toDouble()
             } else if (asset != null && !asset.typeName.startsWith("AtlasGlossary")) {
