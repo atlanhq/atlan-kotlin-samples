@@ -8,6 +8,7 @@ plugins {
 dependencies {
     implementation(project(":common"))
     implementation(project(":events"))
+    implementation(project(":serde"))
 }
 
 tasks {

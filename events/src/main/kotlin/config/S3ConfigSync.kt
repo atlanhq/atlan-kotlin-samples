@@ -2,8 +2,8 @@
 /* Copyright 2023 Atlan Pte. Ltd. */
 package config
 
+import EventUtils
 import Utils
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import mu.KotlinLogging
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.S3Client
@@ -30,7 +30,6 @@ class S3ConfigSync {
     companion object {
         const val CONFIG_FILE = "/tmp/config.json"
         const val RUNTIME_FILE = "/tmp/runtime.json"
-        val MAPPER = jacksonObjectMapper()
     }
 
     /**
@@ -78,18 +77,10 @@ class S3ConfigSync {
             anySynced = true
         }
 
-        val config: T?
-        if (anySynced) {
-            config = parseConfig()
-            config.runtime = MAPPER.readValue(File(RUNTIME_FILE).readText(), RuntimeConfig::class.java)
+        return if (anySynced) {
+            EventUtils.parseConfig(File(CONFIG_FILE).readText(), File(RUNTIME_FILE).readText())
         } else {
-            config = null
+            null
         }
-        return config
-    }
-
-    inline fun <reified T : EventConfig> parseConfig(): T {
-        val type = MAPPER.typeFactory.constructType(T::class.java)
-        return MAPPER.readValue(File(CONFIG_FILE).readText(), type)
     }
 }
