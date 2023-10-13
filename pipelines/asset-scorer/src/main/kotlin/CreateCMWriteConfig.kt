@@ -81,8 +81,8 @@ object CreateCMWriteConfig {
                     .userDescription(
                         "Overall asset score. Indicates how enriched and ready for re-use this asset is, out of a total possible score of 10.",
                     )
-                    .badgeCondition(BadgeCondition.of(BadgeComparisonOperator.GTE, "7.5", BadgeConditionColor.GREEN))
-                    .badgeCondition(BadgeCondition.of(BadgeComparisonOperator.LT, "7.5", BadgeConditionColor.YELLOW))
+                    .badgeCondition(BadgeCondition.of(BadgeComparisonOperator.GTE, "3.5", BadgeConditionColor.GREEN))
+                    .badgeCondition(BadgeCondition.of(BadgeComparisonOperator.LT, "3.5", BadgeConditionColor.YELLOW))
                     .badgeCondition(BadgeCondition.of(BadgeComparisonOperator.LTE, "2.5", BadgeConditionColor.RED))
                     .build()
                 try {
