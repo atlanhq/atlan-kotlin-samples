@@ -13,7 +13,6 @@ import com.atlan.model.enums.BadgeComparisonOperator
 import com.atlan.model.enums.BadgeConditionColor
 import com.atlan.model.structs.BadgeCondition
 import com.atlan.model.typedefs.AttributeDef
-import com.atlan.model.typedefs.AttributeDefOptions
 import com.atlan.model.typedefs.CustomMetadataDef
 import com.atlan.model.typedefs.CustomMetadataOptions
 import mu.KotlinLogging
@@ -52,7 +51,7 @@ object CreateCMWriteConfig {
         } catch (e: NotFoundException) {
             logger.info("Creating scorecard custom metadata {}.{}", CM_SCORING, CM_ATTR_COMPOSITE_SCORE)
             try {
-                val overallScoreBuilder = AttributeDef.of(
+                val initialScore = AttributeDef.of(
                     CM_ATTR_COMPOSITE_SCORE,
                     AtlanCustomAttributePrimitiveType.DECIMAL,
                     null,
@@ -60,15 +59,16 @@ object CreateCMWriteConfig {
                 )
                     .toBuilder()
                     .description("Overall composite score for the asset, based on sum of all of its component scores.")
+                    .build()
                 val overallScore = if (config.assetTypes != null) {
-                    overallScoreBuilder.options(
-                        AttributeDefOptions.builder()
+                    initialScore.toBuilder().options(
+                        initialScore.options.toBuilder()
                             .customApplicableEntityTypes(config.assetTypes.toSet())
                             .build(),
                     )
                         .build()
                 } else {
-                    overallScoreBuilder.build()
+                    initialScore
                 }
                 val customMetadataDef = CustomMetadataDef.creator(CM_SCORING)
                     .attributeDef(overallScore)

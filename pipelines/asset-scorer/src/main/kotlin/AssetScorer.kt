@@ -19,6 +19,8 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import config.EventConfig
 import org.slf4j.Logger
+import java.math.RoundingMode
+import java.text.DecimalFormat
 
 /**
  * Calculates an overall completeness score for an asset,
@@ -102,7 +104,7 @@ object AssetScorer : AbstractNumaflowHandler(Handler) {
         @Throws(AtlanException::class)
         override fun calculateChanges(asset: Asset?, logger: Logger): Collection<Asset> {
             // Calculate the score
-            val score = if (asset is GlossaryTerm) {
+            val score: Double = if (asset is GlossaryTerm) {
                 val sDescription = if (AtlanEventHandler.hasDescription(asset)) 15 else 0
                 val sRelatedTerm = if (!asset.seeAlso.isNullOrEmpty()) 10 else 0
                 val sLinks = if (!asset.links.isNullOrEmpty()) 10 else 0
@@ -118,7 +120,7 @@ object AssetScorer : AbstractNumaflowHandler(Handler) {
                     (asset.readme.description.length > 100) -> 5
                     else -> 0
                 }
-                sDescription + sRelatedTerm + sLinks + sRelatedAsset + sCertificate + sReadme
+                (sDescription + sRelatedTerm + sLinks + sRelatedAsset + sCertificate + sReadme).toDouble()
             } else if (asset != null && !asset.typeName.startsWith("AtlasGlossary")) {
                 // We will not score glossaries or categories
                 val sDescription = if (AtlanEventHandler.hasDescription(asset)) 20 else 0
@@ -126,13 +128,13 @@ object AssetScorer : AbstractNumaflowHandler(Handler) {
                 val sTerms = if (AtlanEventHandler.hasAssignedTerms(asset)) 20 else 0
                 val sTags = if (AtlanEventHandler.hasAtlanTags(asset)) 20 else 0
                 val sLineage = if (AtlanEventHandler.hasLineage(asset)) 20 else 0
-                sDescription + sOwner + sLineage + sTerms + sTags
+                (sDescription + sOwner + sLineage + sTerms + sTags).toDouble()
             } else {
-                -1
+                -1.0
             }
             return if (score >= 0 && asset != null) {
                 val cma = CustomMetadataAttributes.builder()
-                    .attribute(CM_ATTR_COMPOSITE_SCORE, score / 10)
+                    .attribute(CM_ATTR_COMPOSITE_SCORE, round(score / 20))
                     .build()
                 val revised = asset.trimToRequired().customMetadata(CM_SCORING, cma).build()
                 if (hasChanges(asset, revised, logger)) setOf(revised) else emptySet()
@@ -157,5 +159,11 @@ object AssetScorer : AbstractNumaflowHandler(Handler) {
         }
 
         // Note: can reuse default saveChanges
+
+        private fun round(number: Double): Double {
+            val df = DecimalFormat("#.#")
+            df.roundingMode = RoundingMode.CEILING
+            return df.format(number).toDouble()
+        }
     }
 }
