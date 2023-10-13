@@ -36,6 +36,8 @@ object CreateCMWriteConfig {
             Utils.getEnvVar("NESTED_CONFIG", ""),
             WriteConfig.buildRuntimeConfig(),
         )
+        Utils.setClient()
+        Utils.setWorkflowOpts(config.runtime)
         createCMIfNotExists(config)
         WriteConfig.main(args)
     }
