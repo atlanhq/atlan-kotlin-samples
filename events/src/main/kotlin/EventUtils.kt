@@ -39,7 +39,7 @@ object EventUtils {
     fun useApiToken(apiTokenId: String?) {
         if (apiTokenId != null) {
             val token =
-                Atlan.getDefaultClient().apiTokens.list("{\"id\":\"$apiTokenId\"}", "-createdAt", 0, 2)?.records?.get(0)
+                Atlan.getDefaultClient().apiTokens.getByGuid(apiTokenId)
             if (token != null) {
                 logger.info("Setting pipeline to run with token: {}", token.displayName)
                 Utils.setClient("service-account-" + token.clientId)
