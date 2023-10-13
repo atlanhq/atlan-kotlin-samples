@@ -100,7 +100,7 @@ object AssetScorer : AbstractNumaflowHandler(Handler) {
 
         /** {@inheritDoc}  */
         @Throws(AtlanException::class)
-        override fun calculateChanges(asset: Asset, logger: Logger): Collection<Asset> {
+        override fun calculateChanges(asset: Asset?, logger: Logger): Collection<Asset> {
             // Calculate the score
             val score = if (asset is GlossaryTerm) {
                 val sDescription = if (AtlanEventHandler.hasDescription(asset)) 15 else 0
@@ -119,7 +119,7 @@ object AssetScorer : AbstractNumaflowHandler(Handler) {
                     else -> 0
                 }
                 sDescription + sRelatedTerm + sLinks + sRelatedAsset + sCertificate + sReadme
-            } else if (!asset.typeName.startsWith("AtlasGlossary")) {
+            } else if (asset != null && !asset.typeName.startsWith("AtlasGlossary")) {
                 // We will not score glossaries or categories
                 val sDescription = if (AtlanEventHandler.hasDescription(asset)) 20 else 0
                 val sOwner = if (AtlanEventHandler.hasOwner(asset)) 20 else 0
@@ -130,7 +130,7 @@ object AssetScorer : AbstractNumaflowHandler(Handler) {
             } else {
                 -1
             }
-            return if (score >= 0) {
+            return if (score >= 0 && asset != null) {
                 val cma = CustomMetadataAttributes.builder()
                     .attribute(CM_ATTR_COMPOSITE_SCORE, score / 10)
                     .build()
