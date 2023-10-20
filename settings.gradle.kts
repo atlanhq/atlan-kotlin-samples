@@ -13,6 +13,7 @@ rootProject.name = "atlan-kotlin-samples"
 include("common")
 include("serde")
 include("events")
+include("pkg-config")
 include("packages:api-token-connection-admin")
 include("packages:duplicate-detector")
 include("packages:migration-assistant")
