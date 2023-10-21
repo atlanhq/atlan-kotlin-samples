@@ -8,6 +8,7 @@ plugins {
 
 dependencies {
     implementation(project(":common"))
+    implementation(project(":pkg-config"))
     implementation("io.swagger.parser.v3:swagger-parser:2.1.16")
 }
 

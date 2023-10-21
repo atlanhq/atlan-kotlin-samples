@@ -15,6 +15,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+import java.io.File
 
 /**
  * Single class through which you can define a custom package.
@@ -26,7 +27,7 @@ import com.fasterxml.jackson.module.kotlin.registerKotlinModule
  * @param containerImagePullPolicy (optional) override the default IfNotPresent policy
  * @param outputs (optional) any outputs that the custom package logic is expected to produce
  */
-class CustomPackage(
+open class CustomPackage(
     private val packageId: String,
     private val packageName: String,
     private val description: String,
@@ -71,6 +72,29 @@ class CustomPackage(
             outputs,
         ),
     )
+
+    /**
+     * Create the necessary directories and files to capture the definition of the custom package.
+     * - index.js
+     * - package.json
+     * - configmaps/default.yaml
+     * - templates/default.yaml
+     *
+     * @param path (optional) in which to create the package definition files
+     */
+    fun createPackageFiles(path: String = "") {
+        val prefix = when {
+            path.isEmpty() -> path
+            path.endsWith(File.separator) -> path
+            else -> path + File.separator
+        }
+        File(prefix + "index.js").writeText(indexJS())
+        File(prefix + "package.json").writeText(packageJSON())
+        File(prefix + "configmaps").mkdirs()
+        File(prefix + "templates").mkdirs()
+        File(prefix + "configmaps" + File.separator + "default.yaml").writeText(configMapYAML())
+        File(prefix + "templates" + File.separator + "default.yaml").writeText(workflowTemplateYAML())
+    }
 
     /**
      * Retrieve the JavaScript for the index.js of the custom package.

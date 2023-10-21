@@ -9,6 +9,7 @@ plugins {
 dependencies {
     implementation(project(":common"))
     implementation(project(":serde"))
+    implementation(project(":pkg-config"))
     implementation("de.siegmar:fastcsv:2.2.2")
 }
 

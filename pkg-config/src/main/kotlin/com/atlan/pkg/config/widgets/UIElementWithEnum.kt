@@ -10,7 +10,7 @@ abstract class UIElementWithEnum(
     type: String,
     required: Boolean,
     @JsonIgnore val possibleValues: Map<String, String>,
-    val default: String,
+    val default: String? = null,
     ui: Widget,
 ) : UIElement(
     type,
