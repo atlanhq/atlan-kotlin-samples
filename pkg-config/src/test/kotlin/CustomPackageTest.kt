@@ -1,9 +1,11 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 /* Copyright 2023 Atlan Pte. Ltd. */
+import com.atlan.model.enums.AtlanConnectorType
 import com.atlan.pkg.CustomPackage
 import com.atlan.pkg.config.model.ui.UIConfig
 import com.atlan.pkg.config.model.ui.UIRule
 import com.atlan.pkg.config.model.ui.UIStep
+import com.atlan.pkg.config.model.workflow.WorkflowOutputs
 import com.atlan.pkg.config.widgets.ConnectionCreator
 import com.atlan.pkg.config.widgets.ConnectionSelector
 import com.atlan.pkg.config.widgets.Radio
@@ -69,11 +71,33 @@ class CustomPackageTest {
         )
 
         private val pkg = CustomPackage(
-            "csa-openapi-spec-loader",
+            "@csa/openapi-spec-loader",
+            "OpenAPI Spec Loader",
+            "Loads API specs and paths from an OpenAPI (v3) definition.",
+            "http://assets.atlan.com/assets/apispec.png",
+            "https://developer.atlan.com/samples/loaders/openapi/",
             uiConfig,
-            "ghcr.io/atlanhq/atlan-kotlin-samples:0.2.1",
+            "ghcr.io/atlanhq/atlan-kotlin-samples:0.3.0",
             listOf("/dumb-init", "--", "java", "OpenAPISpecLoaderKt"),
+            outputs = WorkflowOutputs(mapOf("debug-logs" to "/tmp/debug.log")),
+            keywords = listOf("kotlin", "crawler", "openapi"),
+            preview = true,
+            connectorType = AtlanConnectorType.API,
         )
+    }
+
+    @Test
+    fun serializeIndex() {
+        val index = pkg.indexJS()
+        assertNotNull(index)
+        print(index)
+    }
+
+    @Test
+    fun serializePackage() {
+        val packageJSON = pkg.packageJSON()
+        assertNotNull(packageJSON)
+        print(packageJSON)
     }
 
     @Test
