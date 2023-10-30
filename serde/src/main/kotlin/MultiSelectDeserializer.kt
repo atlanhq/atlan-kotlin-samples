@@ -18,15 +18,23 @@ class MultiSelectDeserializer : StdDeserializer<List<String>>(TypeFactory.defaul
     override fun deserialize(p: JsonParser?, ctxt: DeserializationContext?): List<String> {
         val root = p?.codec?.readTree<JsonNode>(p)
         if (root != null && !root.isNull && root.isTextual) {
-            val string = root.textValue()
-            return if (string.startsWith("[")) {
-                // TODO: probably a better way to get the mapper from the parser or context,
-                //  but far less hassle to just create one...
-                return jacksonObjectMapper().readValue<List<String>>(string)
-            } else {
-                listOf(string)
-            }
+            return deserialize(root.textValue())
         }
         return listOf()
+    }
+
+    companion object {
+        fun deserialize(value: String?): List<String> {
+            if (!value.isNullOrEmpty()) {
+                return if (value.startsWith("[")) {
+                    // TODO: probably a better way to get the mapper from the parser or context,
+                    //  but far less hassle to just create one...
+                    return jacksonObjectMapper().readValue<List<String>>(value)
+                } else {
+                    listOf(value)
+                }
+            }
+            return listOf()
+        }
     }
 }
