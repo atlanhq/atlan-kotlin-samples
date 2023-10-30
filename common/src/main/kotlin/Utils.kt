@@ -119,7 +119,12 @@ object Utils {
      * @return a map of settings drawn from environment variables
      */
     fun environmentVariables(): Map<String, String> {
-        val map = System.getenv().toMutableMap()
+        val map = mutableMapOf<String, String>()
+        System.getenv().forEach { (k, v) ->
+            if (!v.isNullOrBlank()) {
+                map[k] = v
+            }
+        }
         if (!map.containsKey("DELIMITER")) {
             map["DELIMITER"] = "|"
         }
