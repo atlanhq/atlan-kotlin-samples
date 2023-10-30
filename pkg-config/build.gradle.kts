@@ -1,5 +1,5 @@
 val jarPath = "$rootDir/jars"
-val jarFile = "migration-assistant-$version.jar"
+val jarFile = "pkg-config-$version.jar"
 
 plugins {
     id("atlan-kotlin-sample")
@@ -9,7 +9,9 @@ plugins {
 dependencies {
     implementation(project(":common"))
     implementation(project(":serde"))
-    implementation("de.siegmar:fastcsv:2.2.2")
+    // TODO: confirm we can drop this? implementation("io.kubernetes:client-java:14.0.1")
+    // TODO: confirm we can drop this? implementation(files("lib/argo-client-java-v3.4.9.jar"))
+    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.15.3")
 }
 
 tasks {
@@ -18,7 +20,7 @@ tasks {
         archiveFileName.set(jarFile)
         destinationDirectory.set(file(jarPath))
         dependencies {
-            include(dependency("de.siegmar:fastcsv:.*"))
+            include(dependency("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:.*"))
         }
         mergeServiceFiles()
     }

@@ -227,9 +227,9 @@ class CSVReader @JvmOverloads constructor(path: String, fieldSeparator: Char = '
     override fun close() {
         reader.close()
     }
-}
 
-data class RelatedAssetHold(
-    val fromAsset: Asset,
-    val relatedMap: Map<String, Asset>,
-)
+    data class RelatedAssetHold(
+        val fromAsset: Asset,
+        val relatedMap: Map<String, Asset>,
+    )
+}
