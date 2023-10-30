@@ -10,11 +10,17 @@ class WorkflowInputs(
     @JsonIgnore val config: UIConfig,
 ) {
     val parameters: List<NameValuePair>
+    val artifacts: List<NamePathS3Tuple>
     init {
-        val builder = mutableListOf<NameValuePair>()
-        config.properties.keys.forEach {
-            builder.add(NameValuePair.of(it, ""))
+        val params = mutableListOf<NameValuePair>()
+        val arts = mutableListOf<NamePathS3Tuple>()
+        config.properties.forEach { (k, u) ->
+            if (u.ui.widget == "fileUpload") {
+                arts.add(NamePathS3Tuple(k))
+            }
+            params.add(NameValuePair.of(k, ""))
         }
-        parameters = builder.toList()
+        parameters = params.toList()
+        artifacts = arts.toList()
     }
 }

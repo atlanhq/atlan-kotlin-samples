@@ -23,7 +23,7 @@ class NumericInput(
 ) : UIElement(
     "number",
     required,
-    TextInputWidget(
+    NumericInputWidget(
         label,
         hidden,
         help,
@@ -31,13 +31,14 @@ class NumericInput(
         grid,
     ),
 ) {
-    private class TextInputWidget(
+    private class NumericInputWidget(
         label: String,
         hidden: Boolean = false,
         help: String = "",
         placeholder: String = "",
         grid: Int = 8,
     ) : Widget(
+        "input",
         label,
         hidden,
         help,

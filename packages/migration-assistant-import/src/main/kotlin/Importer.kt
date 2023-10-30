@@ -39,7 +39,7 @@ fun main() {
 class Importer(private val config: Map<String, String>) : AssetGenerator {
 
     private val batchSize = config.getOrDefault("BATCH_SIZE", "50").toInt()
-    private val filename = config.getOrDefault("FILENAME", "")
+    private val filename = config.getOrDefault("UPLOADED_FILE", "")
     private val attrsToOverwrite = attributesToClear()
 
     fun import() {

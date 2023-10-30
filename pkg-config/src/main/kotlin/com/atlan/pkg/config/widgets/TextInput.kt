@@ -38,6 +38,7 @@ class TextInput(
         placeholder: String = "",
         grid: Int = 8,
     ) : Widget(
+        "input",
         label,
         hidden,
         help,

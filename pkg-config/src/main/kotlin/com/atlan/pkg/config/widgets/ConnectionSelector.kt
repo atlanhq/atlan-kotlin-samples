@@ -42,12 +42,11 @@ class ConnectionSelector(
         grid: Int = 4,
         val start: Int = 1,
     ) : Widget(
+        "connectionSelector",
         label,
         hidden,
         help,
         placeholder,
         grid,
-    ) {
-        val widget: String = "connectionSelector"
-    }
+    )
 }

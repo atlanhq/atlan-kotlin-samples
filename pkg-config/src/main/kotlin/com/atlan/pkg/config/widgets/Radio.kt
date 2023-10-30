@@ -41,11 +41,10 @@ class Radio(
         help: String = "",
         placeholder: String = "",
     ) : Widget(
+        "radio",
         label,
         hidden,
         help,
         placeholder,
-    ) {
-        val widget: String = "radio"
-    }
+    )
 }

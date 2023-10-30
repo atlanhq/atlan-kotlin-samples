@@ -25,8 +25,12 @@ class WorkflowContainer(
         builder.add(NameValuePair("X_ATLAN_AGENT_WORKFLOW_ID", "{{=sprig.dig('labels', 'workflows', 'argoproj', 'io/workflow-template', '', workflow)}}"))
         builder.add(NamedSecret("CLIENT_ID", "argo-client-creds", "login"))
         builder.add(NamedSecret("CLIENT_SECRET", "argo-client-creds", "password"))
-        config.properties.forEach {
-            builder.add(NameValuePair(it.key.uppercase(), "{{inputs.parameters.${it.key}}}"))
+        config.properties.forEach { (k, u) ->
+            if (u.ui.widget == "fileUpload") {
+                builder.add(NameValuePair(k.uppercase(), NamePathS3Tuple(k).path))
+            } else {
+                builder.add(NameValuePair(k.uppercase(), "{{inputs.parameters.$k}}"))
+            }
         }
         env = builder.toList()
     }

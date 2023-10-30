@@ -6,6 +6,7 @@ import com.atlan.pkg.config.model.ui.UIRule
 import com.atlan.pkg.config.model.ui.UIStep
 import com.atlan.pkg.config.model.workflow.WorkflowOutputs
 import com.atlan.pkg.config.widgets.DropDown
+import com.atlan.pkg.config.widgets.FileUploader
 import com.atlan.pkg.config.widgets.NumericInput
 import com.atlan.pkg.config.widgets.Radio
 
@@ -22,10 +23,16 @@ object MigrationAssistantImportPkg : CustomPackage(
         steps = listOf(
             UIStep(
                 title = "Configuration",
-                description = "Export configuration",
+                description = "Import configuration",
                 inputs = mapOf(
-                    "s3_details" to TODO("S3 connectivity details widget -- reuse? atlan/connectors/configmaps/csa-lineage-asset-loader.yaml"),
-                    "attr_remove" to DropDown(
+                    "uploaded_file" to FileUploader(
+                        label = "Input file",
+                        fileTypes = listOf("text/csv"),
+                        required = true,
+                        help = "Select the file to import, produced by the migration-assistant-export package.",
+                        placeholder = "Select a CSV file",
+                    ),
+                    "attr_to_overwrite" to DropDown(
                         label = "Remove attributes, if empty",
                         required = false,
                         possibleValues = mapOf(

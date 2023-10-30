@@ -3,43 +3,47 @@
 package com.atlan.pkg.config.widgets
 
 /**
- * Widget that allows you to select an existing API token from a drop-down list,
- * and returns the GUID of the selected API token.
- * Note: currently only API tokens that were created by the user configuring the workflow
- * will appear in the drop-down list.
+ * Widget that allows you to upload a file, and returns the GUID-based name of the file (as it is
+ * renamed after upload).
  *
  * @param label name to show in the UI for the widget
+ * @param fileTypes list of the mime-types of files that should be accepted
  * @param required whether a value must be selected to proceed with the UI setup
  * @param hidden whether the widget will be shown in the UI (false) or not (true)
  * @param help informational text to place in a hover-over to describe the use of the input
- * @param grid sizing of the input on the UI (8 is full-width, 4 is half-width)
+ * @param placeholder placeholder example text to place within the widget to exemplify its use
  */
-class APITokenSelector(
+class FileUploader(
     label: String,
+    fileTypes: List<String>,
     required: Boolean = false,
     hidden: Boolean = false,
     help: String = "",
-    grid: Int = 4,
+    placeholder: String = "",
 ) : UIElement(
     type = "string",
     required,
-    APITokenSelectorWidget(
+    FileUploaderWidget(
         label,
+        fileTypes,
         hidden,
         help,
-        grid,
+        placeholder,
     ),
 ) {
-    private class APITokenSelectorWidget(
+    private class FileUploaderWidget(
         label: String,
+        fileTypes: List<String>,
         hidden: Boolean = false,
         help: String = "",
-        grid: Int = 4,
+        placeholder: String = "",
     ) : Widget(
-        "apiTokenSelect",
+        "fileUpload",
         label,
         hidden,
         help,
-        grid = grid,
-    )
+        placeholder,
+    ) {
+        val accept: List<String> = fileTypes
+    }
 }

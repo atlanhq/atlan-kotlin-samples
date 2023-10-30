@@ -34,11 +34,10 @@ class ConnectionCreator(
         help: String = "",
         placeholder: String = "",
     ) : Widget(
+        "connection",
         label,
         hidden,
         help,
         placeholder,
-    ) {
-        val widget: String = "connection"
-    }
+    )
 }

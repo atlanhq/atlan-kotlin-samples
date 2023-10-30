@@ -40,11 +40,10 @@ class DropDown(
         help: String = "",
         grid: Int,
     ) : Widget(
+        "select",
         label,
         hidden,
         help,
         grid = grid,
-    ) {
-        val widget: String = "select"
-    }
+    )
 }

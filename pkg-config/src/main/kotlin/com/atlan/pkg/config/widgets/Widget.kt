@@ -3,6 +3,7 @@
 package com.atlan.pkg.config.widgets
 
 abstract class Widget(
+    val widget: String,
     val label: String,
     val hidden: Boolean = false,
     val help: String = "",
