@@ -6,8 +6,6 @@ import com.atlan.model.assets.Asset.AssetBuilder
 import com.atlan.model.fields.AtlanField
 import com.atlan.model.fields.SearchableField
 import com.atlan.serde.Serde
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
 import mu.KotlinLogging
 import xformers.cell.AssetRefXformer
 import java.lang.reflect.InvocationTargetException
@@ -56,12 +54,7 @@ class Importer(private val config: Map<String, String>) : AssetGenerator {
      * @return parsed list of attribute names to be cleared
      */
     private fun attributesToClear(): List<AtlanField> {
-        val toOverwrite = Utils.getEnvVar("ATTR_TO_OVERWRITE", "")
-        val attrNames: MutableList<String> = if (toOverwrite != "") {
-            jacksonObjectMapper().readValue(toOverwrite)
-        } else {
-            mutableListOf()
-        }
+        val attrNames: MutableList<String> = MultiSelectDeserializer.deserialize(Utils.getEnvVar("ATTR_TO_OVERWRITE", "")).toMutableList()
         if (attrNames.contains(Asset.CERTIFICATE_STATUS.atlanFieldName)) {
             attrNames.add(Asset.CERTIFICATE_STATUS_MESSAGE.atlanFieldName)
         }
