@@ -4,33 +4,77 @@ package cache
 
 import com.atlan.exception.AtlanException
 import com.atlan.model.assets.Asset
+import com.atlan.model.assets.Glossary
 import com.atlan.model.assets.GlossaryTerm
+import com.atlan.model.fields.AtlanField
 import mu.KotlinLogging
 import xformers.cell.AssignedTermXformer
 
 object TermCache : AssetCache() {
 
-    private val log = KotlinLogging.logger {}
+    private val logger = KotlinLogging.logger {}
+
+    private val includesOnResults: List<AtlanField> = listOf(GlossaryTerm.NAME, GlossaryTerm.ANCHOR)
+    private val includesOnRelations: List<AtlanField> = listOf(Glossary.NAME)
 
     /** {@inheritDoc}  */
-    override fun lookupAsset(identity: String?): Asset? {
+    override fun lookupAssetByIdentity(identity: String?): Asset? {
         val tokens = identity?.split(AssignedTermXformer.TERM_GLOSSARY_DELIMITER)
         if (tokens?.size == 2) {
             val termName = tokens[0]
             val glossaryName = tokens[1]
-            val glossary = GlossaryCache[glossaryName]
+            val glossary = GlossaryCache.getByIdentity(glossaryName)
             if (glossary != null) {
                 try {
-                    return GlossaryTerm.findByNameFast(termName, glossary.qualifiedName)
+                    val term = GlossaryTerm.select()
+                        .where(GlossaryTerm.NAME.eq(termName))
+                        .where(GlossaryTerm.ANCHOR.eq(glossary.qualifiedName))
+                        .includesOnResults(includesOnResults)
+                        .includesOnRelations(includesOnRelations)
+                        .pageSize(2)
+                        .stream()
+                        .findFirst()
+                    if (term.isPresent) {
+                        return term.get()
+                    }
                 } catch (e: AtlanException) {
-                    log.error("Unable to lookup or find term: {}", identity, e)
+                    logger.error("Unable to lookup or find term: {}", identity, e)
                 }
             } else {
-                log.error("Unable to find glossary {} for term reference: {}", glossaryName, identity)
+                logger.error("Unable to find glossary {} for term reference: {}", glossaryName, identity)
             }
         } else {
-            log.error("Unable to lookup or find term, unexpected reference: {}", identity)
+            logger.error("Unable to lookup or find term, unexpected reference: {}", identity)
         }
         return null
+    }
+
+    /** {@inheritDoc}  */
+    override fun lookupAssetByGuid(guid: String?): Asset? {
+        try {
+            val term = GlossaryTerm.select()
+                .where(GlossaryTerm.GUID.eq(guid))
+                .includesOnResults(includesOnResults)
+                .includesOnRelations(includesOnRelations)
+                .pageSize(2)
+                .stream()
+                .findFirst()
+            if (term.isPresent) {
+                return term.get()
+            }
+        } catch (e: AtlanException) {
+            logger.error("Unable to lookup or find term: {}", guid, e)
+        }
+        return null
+    }
+
+    /** {@inheritDoc}  */
+    override fun getIdentityForAsset(asset: Asset): String {
+        return when (asset) {
+            is GlossaryTerm -> {
+                "${asset.name}${AssignedTermXformer.TERM_GLOSSARY_DELIMITER}${asset.anchor.name}"
+            }
+            else -> ""
+        }
     }
 }

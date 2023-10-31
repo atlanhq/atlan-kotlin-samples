@@ -5,11 +5,14 @@ package xformers.cell
 import cache.TermCache
 import com.atlan.model.assets.Asset
 import com.atlan.model.assets.GlossaryTerm
+import mu.KotlinLogging
 
 /**
  * Static object to transform term assignment references.
  */
 object AssignedTermXformer {
+
+    private val logger = KotlinLogging.logger {}
 
     const val TERM_GLOSSARY_DELIMITER = "@@@"
 
@@ -23,7 +26,13 @@ object AssignedTermXformer {
         // Handle some assets as direct embeds
         return when (asset) {
             is GlossaryTerm -> {
-                "${asset.name}$TERM_GLOSSARY_DELIMITER${asset.anchor.name}"
+                val term = TermCache.getByGuid(asset.guid)
+                if (term is GlossaryTerm) {
+                    "${term.name}$TERM_GLOSSARY_DELIMITER${term.anchor.name}"
+                } else {
+                    logger.error("Unable to find any term with GUID: {}", asset.guid)
+                    ""
+                }
             }
             else -> AssetRefXformer.encode(asset)
         }
@@ -39,7 +48,7 @@ object AssignedTermXformer {
     fun decode(assetRef: String, fieldName: String): Asset {
         return when (fieldName) {
             "meanings" -> {
-                TermCache[assetRef]?.trimToReference()!!
+                TermCache.getByIdentity(assetRef)?.trimToReference()!!
             }
             else -> AssetRefXformer.decode(assetRef, fieldName)
         }

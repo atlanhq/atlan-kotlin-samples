@@ -1,5 +1,5 @@
 val jarPath = "$rootDir/jars"
-val jarFile = "migration-assistant-$version.jar"
+val jarFile = "migration-assistant-export-$version.jar"
 
 plugins {
     id("atlan-kotlin-sample")
