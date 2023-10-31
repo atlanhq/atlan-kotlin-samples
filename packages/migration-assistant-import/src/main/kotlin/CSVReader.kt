@@ -80,7 +80,6 @@ class CSVReader @JvmOverloads constructor(path: String, fieldSeparator: Char = '
                 // Initialize a new AssetBatch for each parallel thread
                 batchMap[id] = AssetBatch(
                     Atlan.getDefaultClient(),
-                    "asset",
                     batchSize,
                     true,
                     AssetBatch.CustomMetadataHandling.MERGE,
@@ -90,7 +89,6 @@ class CSVReader @JvmOverloads constructor(path: String, fieldSeparator: Char = '
                 deferDeletes[id] = ConcurrentHashMap()
                 relatedMap[id] = AssetBatch(
                     Atlan.getDefaultClient(),
-                    "related",
                     batchSize,
                     true,
                     AssetBatch.CustomMetadataHandling.MERGE,
