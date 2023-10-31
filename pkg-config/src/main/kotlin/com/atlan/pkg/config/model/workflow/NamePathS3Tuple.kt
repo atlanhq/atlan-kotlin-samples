@@ -10,5 +10,5 @@ data class NamePathS3Tuple(
     @JsonIgnore val inputName: String,
     val name: String = "${inputName}_s3",
     val path: String = "/tmp/original_file/{{inputs.parameters.$inputName}}",
-    val s3: Map<String, String> = mapOf(Pair("key", "{{inputs.parameters.$inputName}}")),
+    val s3: Map<String, String> = mapOf("key" to "{{inputs.parameters.$inputName}}"),
 ) : NamedPair(name)
