@@ -4,6 +4,7 @@ package xformers.cell
 
 import com.atlan.Atlan
 import com.atlan.model.assets.Asset
+import com.atlan.model.assets.GlossaryTerm
 import com.atlan.model.assets.Link
 import com.atlan.model.assets.Readme
 import com.atlan.serde.Serde
@@ -33,6 +34,7 @@ object AssetRefXformer {
                     .build()
                     .toJson(Atlan.getDefaultClient())
             }
+            is GlossaryTerm -> AssignedTermXformer.encode(asset)
             else -> {
                 var qualifiedName = asset.qualifiedName
                 if (asset.qualifiedName.isNullOrEmpty() && asset.uniqueAttributes != null) {
@@ -54,6 +56,7 @@ object AssetRefXformer {
         return when (fieldName) {
             "readme" -> Readme._internal().description(assetRef).build()
             "links" -> Atlan.getDefaultClient().readValue(assetRef, Link::class.java)
+            "meanings" -> AssignedTermXformer.decode(assetRef, fieldName)
             else -> {
                 val tokens = assetRef.split(TYPE_QN_DELIMITER)
                 val typeName = tokens[0]

@@ -120,7 +120,7 @@ class Exporter(private val config: Map<String, String>) : RowGenerator {
 
     private fun getRelatedAttributesToExtract(): MutableList<AtlanField> {
         return mutableListOf(
-            Asset.NAME, // for Link embedding
+            Asset.NAME, // for Link embedding, term anchor
             Asset.DESCRIPTION, // for README embedding
             Link.LINK, // for Link embedding
         )
