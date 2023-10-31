@@ -4,6 +4,7 @@ import com.atlan.Atlan
 import com.atlan.model.assets.Asset
 import com.atlan.model.assets.AtlanQuery
 import com.atlan.model.assets.AuthPolicy
+import com.atlan.model.assets.GlossaryTerm
 import com.atlan.model.assets.IAccessControl
 import com.atlan.model.assets.INamespace
 import com.atlan.model.assets.Link
@@ -120,9 +121,11 @@ class Exporter(private val config: Map<String, String>) : RowGenerator {
 
     private fun getRelatedAttributesToExtract(): MutableList<AtlanField> {
         return mutableListOf(
+            Asset.QUALIFIED_NAME, // for asset referencing
             Asset.NAME, // for Link embedding
             Asset.DESCRIPTION, // for README embedding
             Link.LINK, // for Link embedding
+            GlossaryTerm.ANCHOR, // for assigned term containment
         )
     }
 

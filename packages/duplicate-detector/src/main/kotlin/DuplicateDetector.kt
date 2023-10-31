@@ -130,7 +130,7 @@ fun termsForDuplicates(glossaryQN: String, batchSize: Int) {
         val keys = hashToAssetKeys[hash]
         if (keys?.size!! > 1) {
             val columns = hashToColumns[hash]
-            val batch = AssetBatch(Atlan.getDefaultClient(), "asset", batchSize, false, AssetBatch.CustomMetadataHandling.MERGE, true)
+            val batch = AssetBatch(Atlan.getDefaultClient(), batchSize, false, AssetBatch.CustomMetadataHandling.MERGE, true)
             val termName = "Dup. ($hash)"
             val term = try {
                 GlossaryTerm.findByNameFast(termName, glossaryQN)
