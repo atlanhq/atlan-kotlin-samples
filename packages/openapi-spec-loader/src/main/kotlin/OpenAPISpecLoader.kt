@@ -75,7 +75,7 @@ fun loadOpenAPISpec(connectionQN: String, spec: OpenAPISpecReader, batchSize: In
         logger.error("Unable to save the APISpec.", e)
         exitProcess(5)
     }
-    val batch = AssetBatch(Atlan.getDefaultClient(), APIPath.TYPE_NAME, batchSize, false, AssetBatch.CustomMetadataHandling.MERGE, true)
+    val batch = AssetBatch(Atlan.getDefaultClient(), batchSize, false, AssetBatch.CustomMetadataHandling.MERGE, true)
     val totalCount = spec.paths?.size!!.toLong()
     if (totalCount > 0) {
         logger.info("Creating an APIPath for each path defined within the spec (total: {})", totalCount)
