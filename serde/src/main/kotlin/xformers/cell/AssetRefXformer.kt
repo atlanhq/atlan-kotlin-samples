@@ -56,7 +56,7 @@ object AssetRefXformer {
         return when (fieldName) {
             "readme" -> Readme._internal().description(assetRef).build()
             "links" -> Atlan.getDefaultClient().readValue(assetRef, Link::class.java)
-            "meanings" -> AssignedTermXformer.decode(assetRef, fieldName)
+            "assignedTerms" -> AssignedTermXformer.decode(assetRef, fieldName)
             else -> {
                 val tokens = assetRef.split(TYPE_QN_DELIMITER)
                 val typeName = tokens[0]

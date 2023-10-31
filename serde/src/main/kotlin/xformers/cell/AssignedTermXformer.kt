@@ -47,9 +47,7 @@ object AssignedTermXformer {
      */
     fun decode(assetRef: String, fieldName: String): Asset {
         return when (fieldName) {
-            "meanings" -> {
-                TermCache.getByIdentity(assetRef)?.trimToReference()!!
-            }
+            "assignedTerms" -> TermCache.getByIdentity(assetRef)?.trimToReference()!!
             else -> AssetRefXformer.decode(assetRef, fieldName)
         }
     }
