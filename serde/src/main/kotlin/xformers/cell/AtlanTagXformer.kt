@@ -48,6 +48,9 @@ object AtlanTagXformer {
                 "HIERARCHY_ONLY" -> builder.propagate(true).removePropagationsOnEntityDelete(true).restrictPropagationThroughLineage(true)
                 else -> builder.propagate(false)
             }
+        } else {
+            // If there is no propagation option specified, turn off propagation
+            builder.propagate(false)
         }
         return builder.build()
     }

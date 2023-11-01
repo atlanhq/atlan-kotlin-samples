@@ -35,7 +35,7 @@ class DropDown(
 ) {
     private class DropDownWidget(
         label: String,
-        mode: String,
+        val mode: String,
         hidden: Boolean = false,
         help: String = "",
         grid: Int,
