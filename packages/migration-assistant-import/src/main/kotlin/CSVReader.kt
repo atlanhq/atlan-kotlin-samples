@@ -108,7 +108,6 @@ class CSVReader @JvmOverloads constructor(path: String, fieldSeparator: Char = '
                     if (assets.delete.isNotEmpty()) {
                         deferDeletes[id]!![asset.guid] = assets.delete
                     }
-                    // TODO: Handle non-idempotent Atlan tags
                 } catch (e: AtlanException) {
                     logger.error("Unable to load batch.", e)
                 }
