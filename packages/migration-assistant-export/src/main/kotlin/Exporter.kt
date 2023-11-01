@@ -98,6 +98,7 @@ class Exporter(private val config: Map<String, String>) : RowGenerator {
     private fun getAttributesToExtract(): MutableList<AtlanField> {
         val attributeList: MutableList<AtlanField> = mutableListOf(
             Asset.NAME,
+            Asset.DISPLAY_NAME,
             Asset.DESCRIPTION,
             Asset.USER_DESCRIPTION,
             Asset.OWNER_USERS,
