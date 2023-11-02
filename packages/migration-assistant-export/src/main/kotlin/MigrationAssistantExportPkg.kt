@@ -17,7 +17,7 @@ object MigrationAssistantExportPkg : CustomPackage(
     "Migration Assistant Export",
     "Export manually-enriched assets and the manual enrichments made against them.",
     "http://assets.atlan.com/assets/ph-cloud-arrow-down-light.svg",
-    "https://developer.atlan.com/samples/packages/migration-assistant-export/",
+    "https://atlanhq.github.io/marketplace-csa-scripts/migration-assistant/export/",
     uiConfig = UIConfig(
         steps = listOf(
             UIStep(
@@ -55,7 +55,7 @@ object MigrationAssistantExportPkg : CustomPackage(
                         label = "Batch size",
                         required = false,
                         help = "Maximum number of results to process at a time (per API request).",
-                        placeholder = "20",
+                        placeholder = "50",
                         grid = 4,
                     ),
                 ),
@@ -68,9 +68,14 @@ object MigrationAssistantExportPkg : CustomPackage(
             ),
         ),
     ),
-    containerImage = "ghcr.io/atlanhq/atlan-kotlin-samples:0.3.0",
+    containerImage = "ghcr.io/atlanhq/atlan-kotlin-samples:0.4.0",
     containerCommand = listOf("/dumb-init", "--", "java", "ExporterKt"),
-    outputs = WorkflowOutputs(mapOf("debug-logs" to "/tmp/debug.log")),
+    outputs = WorkflowOutputs(
+        mapOf(
+            "debug-logs" to "/tmp/debug.log",
+            "assets-csv" to "/tmp/asset-export.csv",
+        ),
+    ),
     keywords = listOf("kotlin", "utility"),
     preview = true,
 ) {

@@ -18,14 +18,14 @@ fun main() {
     Utils.setWorkflowOpts()
 
     val connectionQN = Utils.reuseConnection("CONNECTION_QUALIFIED_NAME")
-    val apiTokenName = Utils.getEnvVar("API_TOKEN_NAME", "")
+    val apiTokenGuid = Utils.getEnvVar("API_TOKEN_GUID", "")
 
-    if (connectionQN == "" || apiTokenName == "") {
+    if (connectionQN == "" || apiTokenGuid == "") {
         logger.error("Missing required parameter - you must provide BOTH a connection and the name of an API token.")
         exitProcess(4)
     }
 
-    val apiTokenId = getIdForToken(apiTokenName)
+    val apiTokenId = getIdForToken(apiTokenGuid)
     val connection = getConnectionWithAdmins(connectionQN)
     addTokenAsConnectionAdmin(connection, apiTokenId)
 }
@@ -33,14 +33,14 @@ fun main() {
 /**
  * Retrieve the API token's pseudo-username, that can be used anywhere a username can be used.
  *
- * @param apiTokenName name of the API token for which to fetch the pseudo-username
+ * @param apiTokenGuid name of the API token for which to fetch the pseudo-username
  * @return the pseudo-username of the API token
  */
-fun getIdForToken(apiTokenName: String): String {
-    logger.info("Looking up API token: {}", apiTokenName)
-    val token = Atlan.getDefaultClient().apiTokens.get(apiTokenName)
+fun getIdForToken(apiTokenGuid: String): String {
+    logger.info("Looking up API token: {}", apiTokenGuid)
+    val token = Atlan.getDefaultClient().apiTokens.getByGuid(apiTokenGuid)
     if (token == null) {
-        logger.error("Unable to find any API token with the name: {}", apiTokenName)
+        logger.error("Unable to find any API token with the GUID: {}", apiTokenGuid)
         exitProcess(5)
     }
     return "service-account-${token.clientId}"

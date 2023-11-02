@@ -18,7 +18,7 @@ object MigrationAssistantImportPkg : CustomPackage(
     "Migration Assistant Import",
     "Import manually-enriched assets from a CSV file.",
     "http://assets.atlan.com/assets/ph-cloud-arrow-up-light.svg",
-    "https://developer.atlan.com/samples/packages/migration-assistant-import/",
+    "https://atlanhq.github.io/marketplace-csa-scripts/migration-assistant/import/",
     uiConfig = UIConfig(
         steps = listOf(
             UIStep(
@@ -38,6 +38,7 @@ object MigrationAssistantImportPkg : CustomPackage(
                         possibleValues = mapOf(
                             "certificateStatus" to "Certificate",
                             "announcementType" to "Announcement",
+                            "displayName" to "Display name",
                             "description" to "Description (system)",
                             "userDescription" to "Description (user)",
                             "ownerUsers" to "Owners (users)",
@@ -63,7 +64,7 @@ object MigrationAssistantImportPkg : CustomPackage(
                         label = "Batch size",
                         required = false,
                         help = "Maximum number of results to process at a time (per API request).",
-                        placeholder = "20",
+                        placeholder = "50",
                         grid = 4,
                     ),
                 ),
@@ -76,7 +77,7 @@ object MigrationAssistantImportPkg : CustomPackage(
             ),
         ),
     ),
-    containerImage = "ghcr.io/atlanhq/atlan-kotlin-samples:0.3.0",
+    containerImage = "ghcr.io/atlanhq/atlan-kotlin-samples:0.4.0",
     containerCommand = listOf("/dumb-init", "--", "java", "ImporterKt"),
     outputs = WorkflowOutputs(mapOf("debug-logs" to "/tmp/debug.log")),
     keywords = listOf("kotlin", "utility"),
