@@ -18,7 +18,7 @@ object DuplicateDetectorPkg : CustomPackage(
     "Duplicate Detector",
     "Detect possible duplicate tables, views and materialized views based on their columns.",
     "http://assets.atlan.com/assets/ph-copy-light.svg",
-    "https://developer.atlan.com/samples/packages/duplicate-detector/",
+    "https://atlanhq.github.io/marketplace-csa-scripts/duplicate-detector/",
     uiConfig = UIConfig(
         steps = listOf(
             UIStep(
@@ -71,7 +71,7 @@ object DuplicateDetectorPkg : CustomPackage(
             ),
         ),
     ),
-    containerImage = "ghcr.io/atlanhq/atlan-kotlin-samples:0.3.0",
+    containerImage = "ghcr.io/atlanhq/atlan-kotlin-samples:0.4.0",
     containerCommand = listOf("/dumb-init", "--", "java", "DuplicateDetectorKt"),
     outputs = WorkflowOutputs(mapOf("debug-logs" to "/tmp/debug.log")),
     keywords = listOf("kotlin", "utility"),

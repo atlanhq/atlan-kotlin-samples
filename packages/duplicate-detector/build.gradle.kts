@@ -6,6 +6,7 @@ plugins {
 
 dependencies {
     implementation(project(":common"))
+    implementation(project(":serde"))
     implementation(project(":pkg-config"))
 }
 

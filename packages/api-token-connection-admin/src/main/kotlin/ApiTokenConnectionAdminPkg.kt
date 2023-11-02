@@ -15,7 +15,7 @@ object ApiTokenConnectionAdminPkg : CustomPackage(
     "API Token Connection Admin",
     "Assigns an API token as a connection admin for an existing connection.",
     "http://assets.atlan.com/assets/ph-key-light.svg",
-    "https://developer.atlan.com/samples/packages/api-token-connection-admin/",
+    "https://atlanhq.github.io/marketplace-csa-scripts/api-token-connection-admin/",
     uiConfig = UIConfig(
         steps = listOf(
             UIStep(
@@ -39,7 +39,7 @@ object ApiTokenConnectionAdminPkg : CustomPackage(
             ),
         ),
     ),
-    containerImage = "ghcr.io/atlanhq/atlan-kotlin-samples:0.3.0",
+    containerImage = "ghcr.io/atlanhq/atlan-kotlin-samples:0.4.0",
     containerCommand = listOf("/dumb-init", "--", "java", "ApiTokenConnectionAdminKt"),
     outputs = WorkflowOutputs(mapOf("debug-logs" to "/tmp/debug.log")),
     keywords = listOf("kotlin", "utility"),

@@ -19,7 +19,7 @@ object OpenAPISpecLoaderPkg : CustomPackage(
     "OpenAPI Spec Loader",
     "Loads API specs and paths from an OpenAPI (v3) definition.",
     "http://assets.atlan.com/assets/apispec.png",
-    "https://developer.atlan.com/samples/loaders/openapi/",
+    "https://atlanhq.github.io/marketplace-csa-scripts/openapi-spec-loader/",
     uiConfig = UIConfig(
         steps = listOf(
             UIStep(
@@ -73,7 +73,7 @@ object OpenAPISpecLoaderPkg : CustomPackage(
             ),
         ),
     ),
-    containerImage = "ghcr.io/atlanhq/atlan-kotlin-samples:0.3.0",
+    containerImage = "ghcr.io/atlanhq/atlan-kotlin-samples:0.4.0",
     containerCommand = listOf("/dumb-init", "--", "java", "OpenAPISpecLoaderKt"),
     outputs = WorkflowOutputs(mapOf("debug-logs" to "/tmp/debug.log")),
     keywords = listOf("kotlin", "crawler", "openapi"),

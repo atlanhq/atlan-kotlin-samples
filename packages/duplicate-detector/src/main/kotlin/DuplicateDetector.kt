@@ -27,22 +27,13 @@ private val hashToAssetKeys = ConcurrentHashMap<Int, MutableSet<AssetKey>>()
 private val hashToColumns = ConcurrentHashMap<Int, Set<String>>()
 private val uniqueContainers = ConcurrentHashMap<AssetKey, AssetKey>()
 
-fun main(args: Array<String>) {
+fun main() {
     Utils.setClient()
     Utils.setWorkflowOpts()
 
-    val qnPrefix: String
-    val types: List<String>
-    val batchSize: Int
-    if (args.isNotEmpty()) {
-        qnPrefix = args[0]
-        types = args[1].split(",")
-        batchSize = 50
-    } else {
-        qnPrefix = Utils.getEnvVar("QN_PREFIX", "default")
-        types = Utils.getEnvVar("ASSET_TYPES", "Table,View,MaterialisedView").split(",")
-        batchSize = Utils.getEnvVar("BATCH_SIZE", "50").toInt()
-    }
+    val qnPrefix = Utils.getEnvVar("QN_PREFIX", "default")
+    val types = MultiSelectDeserializer.deserialize(Utils.getEnvVar("ASSET_TYPES", "[\"Table\",\"View\",\"MaterialisedView\"]"))
+    val batchSize = Utils.getEnvVar("BATCH_SIZE", "50").toInt()
 
     logger.info("Detecting duplicates across {} (for prefix {}) on: {}", types, qnPrefix, Atlan.getDefaultClient().baseUrl)
     findAssets(qnPrefix, types, batchSize)
