@@ -12,10 +12,12 @@ object AtlanTagXformer {
     fun encode(fromGuid: String, atlanTag: AtlanTag): String {
         val direct = fromGuid == atlanTag.entityGuid
         return if (direct) {
-            listOf(
-                atlanTag.typeName,
-                encodePropagation(atlanTag),
-            ).joinToString(SETTINGS_DELIMITER)
+            val propagation = encodePropagation(atlanTag)
+            return if (propagation.isNotEmpty()) {
+                "${atlanTag.typeName}$SETTINGS_DELIMITER$propagation"
+            } else {
+                atlanTag.typeName
+            }
         } else {
             ""
         }

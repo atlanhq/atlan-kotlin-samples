@@ -26,11 +26,23 @@ const val CM_HEADING_DELIMITER = "::"
  * @return the name of the header to use for that field
  */
 fun getHeaderForField(field: AtlanField): String {
+    return getHeaderForField(field, Asset::class.java)
+}
+
+/**
+ * Retrieve the name to use for the header for a particular field, assuming a particular type of asset.
+ *
+ * @param field for which to determine the header name
+ * @param assetClass asset class in which to assume the field is defined
+ * @return the name of the header to use for that field
+ */
+fun getHeaderForField(field: AtlanField, assetClass: Class<*>): String {
     return if (field is CustomMetadataField) {
         // For custom metadata, translate the header to human-readable names
         field.setName + CM_HEADING_DELIMITER + field.attributeName
     } else {
-        field.atlanFieldName
+        // Use renamed fields for deserialization, if available
+        ReflectionCache.getDeserializedName(assetClass, field.atlanFieldName)
     }
 }
 
@@ -117,8 +129,7 @@ class RowDeserializer(private val heading: List<String>, private val row: List<S
                         customMetadataMap[setName]!!.attribute(attrName, value)
                     } else {
                         // "Normal" field...
-                        val deserializedFieldName = ReflectionCache.getDeserializedName(assetClass, fieldName)
-                        val setter = ReflectionCache.getSetter(builder.javaClass, deserializedFieldName)
+                        val setter = ReflectionCache.getSetter(builder.javaClass, fieldName)
                         if (setter != null) {
                             val value = FieldSerde.getValueFromCell(rValue, setter)
                             if (value != null) {
@@ -128,7 +139,7 @@ class RowDeserializer(private val heading: List<String>, private val row: List<S
                                     // Only set the value on the asset directly if it does not require
                                     // special handling, otherwise leave it to the special handling
                                     // to set the value (later)
-                                    ReflectionCache.setValue(builder, deserializedFieldName, value)
+                                    ReflectionCache.setValue(builder, fieldName, value)
                                 }
                             }
                         }
