@@ -12,7 +12,7 @@ repositories {
 }
 
 dependencies {
-    implementation("com.atlan:atlan-java:1.5.0")
+    implementation("com.atlan:atlan-java:1.6.0")
     implementation("io.github.microutils:kotlin-logging-jvm:3.0.5")
     runtimeOnly("org.apache.logging.log4j:log4j-core:2.20.0")
     runtimeOnly("org.apache.logging.log4j:log4j-slf4j2-impl:2.20.0")
