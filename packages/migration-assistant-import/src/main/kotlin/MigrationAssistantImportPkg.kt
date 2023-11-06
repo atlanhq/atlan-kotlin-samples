@@ -50,6 +50,16 @@ object MigrationAssistantImportPkg : CustomPackage(
                         multiSelect = true,
                         grid = 8,
                     ),
+                    "upsert_semantic" to Radio(
+                        label = "Input handling",
+                        required = true,
+                        possibleValues = mapOf(
+                            "upsert" to "Create and update",
+                            "update" to "Update only",
+                        ),
+                        default = "update",
+                        help = "Whether to allow the creation of new assets from the input CSV, or ensure assets are only updated if they already exist in Atlan.",
+                    ),
                     "control_config_strategy" to Radio(
                         label = "Options",
                         required = true,
