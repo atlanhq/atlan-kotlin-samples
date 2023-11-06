@@ -22,7 +22,7 @@ import java.util.concurrent.atomic.AtomicLong
  * @param path location and filename of the CSV file to read
  * @param fieldSeparator character to use to separate fields (for example ',' or ';')
  */
-class CSVReader @JvmOverloads constructor(path: String, fieldSeparator: Char = ',') : Closeable {
+class CSVReader @JvmOverloads constructor(path: String, private val updateOnly: Boolean, fieldSeparator: Char = ',') : Closeable {
 
     private val reader: CsvReader
     private val header: List<String>
@@ -84,6 +84,7 @@ class CSVReader @JvmOverloads constructor(path: String, fieldSeparator: Char = '
                     true,
                     AssetBatch.CustomMetadataHandling.MERGE,
                     true,
+                    updateOnly,
                 )
                 relatedHolds[id] = ConcurrentHashMap()
                 deferDeletes[id] = ConcurrentHashMap()

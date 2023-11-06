@@ -38,10 +38,11 @@ class Importer(private val config: Map<String, String>) : AssetGenerator {
 
     private val batchSize = config.getOrDefault("BATCH_SIZE", "50").toInt()
     private val filename = config.getOrDefault("UPLOADED_FILE", "")
+    private val updateOnly = config.getOrDefault("UPSERT_SEMANTIC", "update") == "update"
     private val attrsToOverwrite = attributesToClear()
 
     fun import() {
-        CSVReader(filename).use { csv ->
+        CSVReader(filename, updateOnly).use { csv ->
             val start = System.currentTimeMillis()
             csv.streamRows(this, batchSize, logger)
             logger.info("Total time taken: {} ms", System.currentTimeMillis() - start)

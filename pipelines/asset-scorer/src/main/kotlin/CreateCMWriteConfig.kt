@@ -63,7 +63,7 @@ object CreateCMWriteConfig {
                 val overallScore = if (config.assetTypes != null) {
                     initialScore.toBuilder().options(
                         initialScore.options.toBuilder()
-                            .customApplicableEntityTypes(config.assetTypes.toSet())
+                            .applicableAssetTypes(config.assetTypes.toSet())
                             .build(),
                     )
                         .build()
