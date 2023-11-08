@@ -5,6 +5,7 @@ import com.atlan.exception.AtlanException
 import com.atlan.model.assets.Asset
 import com.atlan.model.assets.Connection
 import com.atlan.model.core.AssetMutationResponse
+import com.atlan.pkg.Utils
 import mu.KotlinLogging
 import kotlin.system.exitProcess
 

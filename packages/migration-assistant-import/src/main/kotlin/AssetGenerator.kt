@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 /* Copyright 2023 Atlan Pte. Ltd. */
 import com.atlan.model.assets.Asset
+import com.atlan.pkg.serde.RowDeserialization
 
 /**
  * Interface to generate an asset object from a row of string values.

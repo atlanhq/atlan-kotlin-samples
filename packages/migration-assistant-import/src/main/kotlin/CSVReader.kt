@@ -6,6 +6,7 @@ import com.atlan.exception.AtlanException
 import com.atlan.model.assets.Asset
 import com.atlan.model.enums.AtlanDeleteType
 import com.atlan.model.fields.AtlanField
+import com.atlan.pkg.Utils
 import com.atlan.util.AssetBatch
 import de.siegmar.fastcsv.reader.CsvReader
 import de.siegmar.fastcsv.reader.CsvRow
