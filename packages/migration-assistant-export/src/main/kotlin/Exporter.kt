@@ -12,6 +12,9 @@ import com.atlan.model.assets.Procedure
 import com.atlan.model.fields.AtlanField
 import com.atlan.model.fields.CustomMetadataField
 import com.atlan.model.search.FluentSearch
+import com.atlan.pkg.Utils
+import com.atlan.pkg.serde.RowSerde
+import com.atlan.pkg.serde.RowSerializer
 import mu.KotlinLogging
 import java.io.File
 import java.util.stream.Collectors
@@ -59,7 +62,7 @@ class Exporter(private val config: Map<String, String>) : RowGenerator {
                 .collect(Collectors.toList())
             headerNames.addAll(
                 getAttributesToExtract().stream()
-                    .map { f -> getHeaderForField(f) }
+                    .map { f -> RowSerde.getHeaderForField(f) }
                     .collect(Collectors.toList()),
             )
             csv.writeHeader(headerNames)

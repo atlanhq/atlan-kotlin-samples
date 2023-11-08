@@ -5,6 +5,7 @@ import com.atlan.exception.AtlanException
 import com.atlan.model.assets.APIPath
 import com.atlan.model.assets.APISpec
 import com.atlan.model.core.AssetMutationResponse
+import com.atlan.pkg.Utils
 import com.atlan.util.AssetBatch
 import io.swagger.v3.oas.models.OpenAPI
 import io.swagger.v3.oas.models.Operation

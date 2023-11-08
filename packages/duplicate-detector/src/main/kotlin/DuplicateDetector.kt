@@ -12,6 +12,8 @@ import com.atlan.model.assets.Table
 import com.atlan.model.assets.View
 import com.atlan.model.enums.CertificateStatus
 import com.atlan.model.search.CompoundQuery
+import com.atlan.pkg.Utils
+import com.atlan.pkg.serde.MultiSelectDeserializer
 import com.atlan.util.AssetBatch
 import mu.KotlinLogging
 import java.util.concurrent.ConcurrentHashMap

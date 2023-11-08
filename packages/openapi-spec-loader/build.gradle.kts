@@ -2,13 +2,11 @@ val jarPath = "$rootDir/jars"
 val jarFile = "openapi-spec-loader-$version.jar"
 
 plugins {
-    id("atlan-kotlin-sample")
+    id("com.atlan.kotlin-custom-package")
     id("com.github.johnrengelman.shadow") version "7.1.2"
 }
 
 dependencies {
-    implementation(project(":common"))
-    implementation(project(":pkg-config"))
     implementation("io.swagger.parser.v3:swagger-parser:2.1.16")
 }
 

@@ -2,14 +2,11 @@ val jarPath = "$rootDir/jars"
 val jarFile = "migration-assistant-export-$version.jar"
 
 plugins {
-    id("atlan-kotlin-sample")
+    id("com.atlan.kotlin-custom-package")
     id("com.github.johnrengelman.shadow") version "7.1.2"
 }
 
 dependencies {
-    implementation(project(":common"))
-    implementation(project(":serde"))
-    implementation(project(":pkg-config"))
     implementation("de.siegmar:fastcsv:2.2.2")
 }
 

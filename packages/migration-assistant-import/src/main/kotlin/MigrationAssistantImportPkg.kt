@@ -87,7 +87,7 @@ object MigrationAssistantImportPkg : CustomPackage(
             ),
         ),
     ),
-    containerImage = "ghcr.io/atlanhq/atlan-kotlin-samples:0.4.0",
+    containerImage = "ghcr.io/atlanhq/atlan-kotlin-samples@sha256:09bddb2f520bb15f6b4182fc822163e51c5d9793f3f233b77585d021f321bf2f",
     containerCommand = listOf("/dumb-init", "--", "java", "ImporterKt"),
     outputs = WorkflowOutputs(mapOf("debug-logs" to "/tmp/debug.log")),
     keywords = listOf("kotlin", "utility"),

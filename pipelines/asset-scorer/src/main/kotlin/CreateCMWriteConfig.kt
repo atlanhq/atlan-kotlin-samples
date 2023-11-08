@@ -1,6 +1,5 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 /* Copyright 2023 Atlan Pte. Ltd. */
-import EventUtils.parseConfig
 import com.atlan.Atlan
 import com.atlan.exception.AtlanException
 import com.atlan.exception.ConflictException
@@ -15,6 +14,9 @@ import com.atlan.model.structs.BadgeCondition
 import com.atlan.model.typedefs.AttributeDef
 import com.atlan.model.typedefs.CustomMetadataDef
 import com.atlan.model.typedefs.CustomMetadataOptions
+import com.atlan.pkg.Utils
+import com.atlan.pkg.events.EventUtils
+import com.atlan.pkg.events.WriteConfig
 import mu.KotlinLogging
 import kotlin.system.exitProcess
 
@@ -31,7 +33,7 @@ object CreateCMWriteConfig {
 
     @JvmStatic
     fun main(args: Array<String>) {
-        val config = parseConfig<AssetScorer.Cfg>(
+        val config = EventUtils.parseConfig<AssetScorer.Cfg>(
             Utils.getEnvVar("NESTED_CONFIG", ""),
             WriteConfig.buildRuntimeConfig(),
         )

@@ -14,10 +14,13 @@ import com.atlan.model.assets.ICatalog
 import com.atlan.model.core.CustomMetadataAttributes
 import com.atlan.model.enums.CertificateStatus
 import com.atlan.model.events.AtlanEvent
+import com.atlan.pkg.events.AbstractNumaflowHandler
+import com.atlan.pkg.events.EventUtils
+import com.atlan.pkg.events.config.EventConfig
+import com.atlan.pkg.serde.MultiSelectDeserializer
 import com.fasterxml.jackson.annotation.JsonAutoDetect
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
-import config.EventConfig
 import org.slf4j.Logger
 import java.math.RoundingMode
 import java.text.DecimalFormat

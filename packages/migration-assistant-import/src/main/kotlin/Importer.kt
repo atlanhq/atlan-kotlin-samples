@@ -5,9 +5,13 @@ import com.atlan.model.assets.Asset
 import com.atlan.model.assets.Asset.AssetBuilder
 import com.atlan.model.fields.AtlanField
 import com.atlan.model.fields.SearchableField
+import com.atlan.pkg.Utils
+import com.atlan.pkg.serde.MultiSelectDeserializer
+import com.atlan.pkg.serde.RowDeserialization
+import com.atlan.pkg.serde.RowDeserializer
+import com.atlan.pkg.serde.cell.AssetRefXformer
 import com.atlan.serde.Serde
 import mu.KotlinLogging
-import xformers.cell.AssetRefXformer
 import java.lang.reflect.InvocationTargetException
 
 private val logger = KotlinLogging.logger {}
@@ -88,7 +92,7 @@ class Importer(private val config: Map<String, String>) : AssetGenerator {
         if (assets != null) {
             val builder = assets.primary
             val candidate = builder.build()
-            val identity = AssetIdentity(candidate.typeName, candidate.qualifiedName)
+            val identity = RowDeserialization.AssetIdentity(candidate.typeName, candidate.qualifiedName)
             // Then apply any field clearances based on attributes configured in the job
             for (field in attrsToOverwrite) {
                 clearField(field, candidate, builder)
