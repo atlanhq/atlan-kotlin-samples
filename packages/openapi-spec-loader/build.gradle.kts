@@ -3,7 +3,7 @@ val jarFile = "openapi-spec-loader-$version.jar"
 
 plugins {
     id("com.atlan.kotlin-custom-package")
-    id("com.github.johnrengelman.shadow") version "7.1.2"
+    alias(libs.plugins.shadow)
 }
 
 dependencies {
@@ -31,6 +31,9 @@ tasks {
     }
 
     jar {
-        dependsOn(shadowJar)
+        // Override the default jar task so we get the shadowed jar
+        // as the only jar output
+        actions = listOf()
+        doLast { shadowJar }
     }
 }
