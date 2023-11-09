@@ -5,3 +5,6 @@ atlan-java = "1.7.0-SNAPSHOT"
 pkg-toolkit-config = { module = "com.atlan:package-toolkit-config", version.ref = "atlan-java" }
 pkg-toolkit-runtime = { module = "com.atlan:package-toolkit-runtime", version.ref = "atlan-java" }
 pkg-toolkit-events = { module = "com.atlan:package-toolkit-events", version.ref = "atlan-java" }
+
+[plugins]
+shadow = { id = "com.github.johnrengelman.shadow", version = "7.1.2" }
