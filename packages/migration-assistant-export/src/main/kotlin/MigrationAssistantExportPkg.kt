@@ -68,7 +68,8 @@ object MigrationAssistantExportPkg : CustomPackage(
             ),
         ),
     ),
-    containerImage = "ghcr.io/atlanhq/atlan-kotlin-samples@sha256:09bddb2f520bb15f6b4182fc822163e51c5d9793f3f233b77585d021f321bf2f",
+    containerImage = "ghcr.io/atlanhq/atlan-kotlin-samples:0.5.0-SNAPSHOT",
+    containerImagePullPolicy = "Always",
     containerCommand = listOf("/dumb-init", "--", "java", "ExporterKt"),
     outputs = WorkflowOutputs(
         mapOf(
